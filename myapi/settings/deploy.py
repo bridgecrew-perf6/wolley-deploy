@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['*']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'wolley_db',
+        'NAME': 'wolleydb',
         'USER': 'root',
         'PASSWORD': read_secret("MYSQL_PASSWORD"),
         'HOST': 'mariadb',

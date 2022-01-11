@@ -14,8 +14,7 @@ def make_dummy_piechart_info():
     content["responseMsg"] = "성공"
 
     content["data"] = dict()
-    content["data"]["piechartInfo"] = dict()
-    content["data"]["piechartInfo"]["id"] = 132
+    content["data"]["id"] = 132
 
     # make interval1 info
     interval1 = dict()
@@ -30,9 +29,9 @@ def make_dummy_piechart_info():
     interval2["endTime"] = "2022-01-04 22:45:10"
     interval2["labels"] = ["?"]
 
-    content["data"]["piechartInfo"]["info"] = list()
-    content["data"]["piechartInfo"]["info"].append(interval1)
-    content["data"]["piechartInfo"]["info"].append(interval2)
+    content["data"]["info"] = list()
+    content["data"]["info"].append(interval1)
+    content["data"]["info"].append(interval2)
 
     return content
 

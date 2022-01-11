@@ -30,7 +30,8 @@ def make_dummy_diary_info():
 class DiaryRequestView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def get(self, request):
+        uuid = request.GET["uuid"]
         content = make_dummy_diary_info()
         return Response(content, status=status.HTTP_200_OK)
 

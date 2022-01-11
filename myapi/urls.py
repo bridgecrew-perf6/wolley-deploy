@@ -22,5 +22,5 @@ urlpatterns = [
     path('', include("piechartapp.urls")),
     # path('', include("intervalapp.urls")),
     # path('', include("placeapp.urls")),
-    # path('', include("diaryapp.urls")),
+    path('', include("diaryapp.urls")),
 ]

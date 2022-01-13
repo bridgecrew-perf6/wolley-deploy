@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'placeapp',
-    'testapp',
 
     # rest framework
     'rest_framework',

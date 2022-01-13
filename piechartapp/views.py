@@ -8,6 +8,9 @@ from django.utils.decorators import method_decorator
 
 import datetime
 
+from testapp.models import Test
+
+
 def make_dummy_interval_info(interval_id: int, start_time: str, end_time: str, label: str):
     interval = dict()
     interval["id"] = interval_id
@@ -78,22 +81,29 @@ def save_intervals(uuid, piechart_id, intervals):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PiechartRequestView(APIView):
-    permission_classes = [AllowAny]
+#     permission_classes = [AllowAny]
+#
+#     # def post(self, request):
+#     #     content = make_dummy_piechart_info()
+#     #     return Response(content, status=status.HTTP_200_OK)
+#
+#     def post(self, request):
+#         # data parsing
+#         content = request.data
+#
+#         uuid = content["uuid"]
+#         piechart_id = content["piechart_id"]
+#         time_sequence = content["time_sequence"]
+#         datetimes, coordinates = parse_time_sequence(time_sequence)
+#
+#         ## make intervals
+#         intervals = make_intervals(datetimes, coordinates)
+#         save_intervals(uuid, piechart_id, intervals)
+#
+#         return Response("ok", status=status.HTTP_200_OK)
 
-    def post(self, request):
-        content = make_dummy_piechart_info()
-        return Response(content, status=status.HTTP_200_OK)
+        def post(self, request):
+            content = request.data
+            Test.objects.create(textfield=content)
 
-    # def post(self, request):
-    #     # data parsing
-    #     content = request.data
-    #     uuid = content["uuid"]
-    #     piechart_id = content["piechart_id"]
-    #     time_sequence = content["time_sequence"]
-    #     datetimes, coordinates = parse_time_sequence(time_sequence)
-    #
-    #     # make intervals
-    #     intervals = make_intervals(datetimes, coordinates)
-    #     save_intervals(uuid, piechart_id, intervals)
-    #
-    #     return Response("ok", status=status.HTTP_200_OK)
+            return Response("ok", status=status.HTTP_200_OK)

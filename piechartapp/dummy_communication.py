@@ -1,4 +1,4 @@
-from testapp.models import Test
+from testapp.models import TestTable
 
 
 def make_dummy_interval_info(interval_id: int, start_time: str, end_time: str, label: str):

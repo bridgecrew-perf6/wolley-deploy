@@ -7,4 +7,4 @@ class TestTable(models.Model):
     textfield = models.TextField()  # 속성명 변경 text -> content(내용물)
 
     class Meta:
-        db_table = 'test'
+        db_table = 'testtable'

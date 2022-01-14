@@ -39,10 +39,6 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'placeapp',
-    'testapp',
-
-    # for test
-    'testapp',
 
     # for TestTable
     'testapp',

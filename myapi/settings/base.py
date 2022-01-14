@@ -25,7 +25,6 @@ def read_secret(secret_name):
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,6 +39,13 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'placeapp',
+    'testapp',
+
+    # for test
+    'testapp',
+
+    # for TestTable
+    'testapp',
 
     # rest framework
     'rest_framework',
@@ -47,6 +53,7 @@ INSTALLED_APPS = [
     # CORS error 처리
     'corsheaders',
 ]
+
 
 MIDDLEWARE = [
     # CORS error 처리

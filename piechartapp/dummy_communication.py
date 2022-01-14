@@ -49,4 +49,4 @@ def save_raw_in_test_table(request):
     FE의 request 내용을 raw하게 Test 테이블의 textfield에 있는 그대로 저장
     """
     content = request.data
-    Test.objects.create(textfield=content)
+    TestTable.objects.create(textfield=content)

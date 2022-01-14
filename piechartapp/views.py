@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 
 import datetime
 
-import dummy_communication as dum
+from .dummy_communication import *
 
 
 def parse_time_sequence(time_sequence):
@@ -44,8 +44,8 @@ class PiechartRequestView(APIView):
         """
         FE와 dummy data 통신
         """
-        dum.save_raw_in_test_table(request)
-        content = dum.make_dummy_piechart_info()
+        save_raw_in_test_table(request)
+        content = make_dummy_piechart_info()
         return Response(content, status=status.HTTP_200_OK)
 
     # def post(self, request):

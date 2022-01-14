@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import PieChart
+from .models import DailyPath
 
 
 class PieChartSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PieChart
+        model = DailyPath
         fields = '__all__'

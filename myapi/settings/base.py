@@ -35,10 +35,11 @@ INSTALLED_APPS = [
 
     # 생성한 장고 프로젝트
     'accountapp',
-    'piechartapp',
+    'dailypathapp',
     'diaryapp',
     'intervalapp',
     'placeapp',
+    'recommendationapp',
 
     # for TestTable
     'testapp',

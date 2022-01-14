@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PieChart
+from .models import DailyPath
 
 
 # class PieChartAdmin(admin.ModelAdmin):
@@ -9,4 +9,4 @@ from .models import PieChart
 #
 # admin.site.register(PieChart, PieChartAdmin)
 
-admin.site.register(PieChart)
+admin.site.register(DailyPath)

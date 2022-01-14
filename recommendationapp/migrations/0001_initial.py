@@ -14,16 +14,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Diary',
+            name='Recommendation',
             fields=[
-                ('id', models.BigAutoField(db_column='diary_id', primary_key=True, serialize=False)),
-                ('content', models.TextField()),
+                ('id', models.BigAutoField(db_column='recommendation_id', primary_key=True, serialize=False)),
+                ('place', models.CharField(max_length=50)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(auto_now=True)),
-                ('pie_chart', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='dailypathapp.DailyPath')),
+                ('pie_chart', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recommendations', to='dailypathapp.DailyPath')),
             ],
             options={
-                'db_table': 'diary',
+                'db_table': 'recommendation',
             },
         ),
     ]

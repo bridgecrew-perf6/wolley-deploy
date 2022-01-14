@@ -1,12 +1,12 @@
 from django.db import models
 
-from piechartapp.models import PieChart
+from dailypathapp.models import DailyPath
 
 
 class Diary(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='diary_id')
     pie_chart = models.OneToOneField(
-        PieChart,
+        DailyPath,
         on_delete=models.CASCADE,
         null=True,
         blank=True,

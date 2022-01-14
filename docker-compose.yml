@@ -5,6 +5,8 @@ services:
     volumes:
       - /home/alpha_technic/nginx_setting/nginx.conf:/etc/nginx/nginx.conf
       - static-volume:/data/static
+    environment:
+      - TZ=Asia/Seoul
     networks:
       - network
     ports:

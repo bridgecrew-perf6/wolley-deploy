@@ -10,7 +10,7 @@ def make_dummy_interval_info(interval_id: int, start_time: str, end_time: str, l
     return interval
 
 
-def make_dummy_piechart_info():
+def make_dummy_piechart_info_ver1():
     content = dict()
     content["responseMsg"] = "성공"
 
@@ -40,6 +40,54 @@ def make_dummy_piechart_info():
     content["data"]["info"].append(
         make_dummy_interval_info(7, "2022-01-12 12:52:00", "2022-01-12 13:34:00", "B장소")
     )
+
+    return content
+
+
+def make_dummy_piechart_info_ver2():
+    content = dict()
+    content["responseMsg"] = "성공"
+
+    content["data"] = dict()
+    content["data"]["id"] = 132
+    content["data"]["date"] = "2022-01-04"
+
+    content["data"]["info"] = list()
+
+    # 1번째 info 정보
+    info1 = dict()
+    info1["id"] = 1
+    info1["intervalCategory"] = "회사"
+    info1["intervalLocation"] = "카카오브레인"
+    info1["time"] = {"start": "10:45:10", "end": "12:00:00"}
+    info1["coordinate"] = {"latitude": 33.450901, "longitude": 126.570667}
+    info1["labels"] = ["?"]
+    info1["percent"] = 0.3
+    info1["emotion"] = "긍정"
+
+    # 2번째 info 정보
+    info2 = dict()
+    info2["id"] = 2
+    info2["intervalCategory"] = "식사"
+    info2["intervalLocation"] = "청년다방"
+    info2["time"] = {"start": "12:10:00", "end": "13:00:00"}
+    info2["coordinate"] = {"latitude": 33.450901, "longitude": 126.570667}
+    info2["labels"] = ["음식점"]
+    info2["percent"] = 0.1
+    info2["emotion"] = "긍정"
+
+    # 3번째 info 정보
+    info3 = dict()
+    info3["id"] = 1
+    info3["intervalCategory"] = "회사"
+    info3["intervalLocation"] = "카카오브레인"
+    info3["time"] = {"start": "13:00:11", "end": "17:00:00"}
+    info3["coordinate"] = {"latitude": 33.450901, "longitude": 126.570667}
+    info3["labels"] = ["?"]
+    info3["percent"] = 0.6
+    info3["emotion"] = "긍정"
+
+    content["data"]["info"] = [info1, info2, info3]
 
     return content
 

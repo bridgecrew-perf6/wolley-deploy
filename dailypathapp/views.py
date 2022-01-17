@@ -45,7 +45,7 @@ class PiechartRequestView(APIView):
         FE와 dummy data 통신
         """
         save_raw_in_test_table(request)
-        content = make_dummy_piechart_info()
+        content = make_dummy_piechart_info_ver2()
         return Response(content, status=status.HTTP_200_OK)
 
     # def post(self, request):

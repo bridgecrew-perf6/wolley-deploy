@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 import datetime
 
 import dailypathapp.dummy_communication as dum
-import dailypathapp.stayPointDetect as sp
+import dailypathapp.stayPointDetectection as sp
 from dailypathapp.models import DailyPath
 
 
@@ -31,12 +31,12 @@ def generate_points_from_DB(uuid):
     return points
 
 
-def generate_points_from_request(request):
+def generate_points_from_request(request_dict):
     time_seq = []
-    for data in request.data["timeSequence"]:
+    for data in request_dict["timeSequence"]: # 추후 request.data로 고치면 됨
         latitude = data["coordinate"]["latitude"]
         longitude = data["coordinate"]["longitude"]
-        dateTime = datetime.datetime.strptime(data["time"], "%Y-%m-%d %H:%M:%S")
+        dateTime = data["time"]
         time_seq.append((latitude, longitude, dateTime))
     points = sp.generatePoints(time_seq)
 
@@ -65,6 +65,25 @@ class PiechartRequestView(APIView):
         content = dum.make_dummy_piechart_info_ver2()
         return Response(content, status=status.HTTP_200_OK)
 
+    # dummy gps data로 통신
+    # def post(self, request):
+    #     request = dum.make_dummy_timestamps()
+    #     points = generate_points_from_DB(request["uuid"])
+    #     points += generate_points_from_request(request)
+    #     stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
+    #
+    #     import time
+    #     content = dict()
+    #     asc = 65
+    #     time_format = '%Y-%m-%d %H:%M:%S'
+    #     for obj in stayPointCenter:
+    #         name = f"{chr(asc)}장소"
+    #         content[name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
+    #         asc += 1
+    #
+    #     return Response(content, status=status.HTTP_200_OK)
+
+    # for real 통신
     # def post(self, request):
     #     points = generate_points_from_DB(request.data["uuid"])
     #     points += generate_points_from_request(request)

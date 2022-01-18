@@ -1,6 +1,9 @@
 import json
+from datetime import date, timedelta
+from typing import Dict
 
 import requests
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +11,10 @@ from rest_framework import status
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+
+from dailypathapp.models import DailyPath
+from diaryapp.models import Diary
+from intervalapp.models import Interval
 
 
 def make_dummy_diary_info():
@@ -25,31 +32,60 @@ def make_dummy_diary_info():
     return content
 
 
+def make_response_content(response_msg: str, data: Dict = None) -> Dict:
+    content = dict()
+    content['responseMsg'] = response_msg
+
+    if data:
+        content['data'] = data
+
+    return content
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class DiaryRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        uuid = request.GET["uuid"]
-        content = make_dummy_diary_info()
-        return Response(content, status=status.HTTP_200_OK)
+        user = request.headers['user']
+        check_date = date.today() - timedelta(1)
 
+        try:
+            daily_path = DailyPath.objects.get(user__user__username=user, date=check_date)
+        except DailyPath.DoesNotExist:
+            content = make_response_content("daily path 없음")
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-# API Test Code
-def make_dummy_diary_info_api():
-    r = requests.get(
-        'http://brain-cluster-gpu9.dakao.io:27151/diary/?uuid=1&pieChartId=1&diaryId=1',
-    )
+        try:
+            diary = Diary.objects.get(daily_path=daily_path.id)
+            data = {
+                "id": diary.id,
+                "date": check_date,
+                "content": diary.content
+            }
+            content = make_response_content("성공", data)
+            return Response(content, status=status.HTTP_200_OK)
+        except Diary.DoesNotExist:
+            intervals = Interval.objects.filter(daily_path=daily_path.id)
+            request_data = json.dumps({"data": list(intervals.values())}, cls=DjangoJSONEncoder)
 
-    response = json.loads(r.content)
-    return response
+            # 일기 생성 요청
+            # res = requests.post("http://gpu-cloud-cpu32.dakao.io:5435/diary/",data=data)
+            res = requests.post("http://127.0.0.1:8080/diary/", data=request_data)
 
+            # 일기 객체 생성
+            diary_content = res.json()['content']
+            new_diary = Diary(daily_path=daily_path, content=diary_content)
+            new_diary.save()
 
-@method_decorator(csrf_exempt, name='dispatch')
-class DiaryRequestApiView(APIView):
-    permission_classes = [AllowAny]
+            # 일기 객체 전달
+            data = {
+                "id": new_diary.id,
+                "date": check_date,
+                "content": new_diary.content
+            }
+            content = make_response_content("일기 생성 성공", data)
+            return Response(content, status=status.HTTP_201_CREATED)
 
-    def post(self, request):
-        content = make_dummy_diary_info_api()
-        print(content)
-        return Response(content, status=status.HTTP_200_OK)
+        content = make_response_content("잘못된 접근")
+        return Response(content, status=status.HTTP_404_NOT_FOUND)

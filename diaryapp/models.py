@@ -5,7 +5,7 @@ from dailypathapp.models import DailyPath
 
 class Diary(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='diary_id')
-    pie_chart = models.OneToOneField(
+    daily_path = models.OneToOneField(
         DailyPath,
         on_delete=models.CASCADE,
         null=True,
@@ -20,4 +20,4 @@ class Diary(models.Model):
         db_table = 'diary'
 
     def __str__(self):
-        return f'{self.pie_chart} -> diary_content : {self.content[:10]}...'
+        return f'{self.daily_path} -> (diary_id: {self.id}, content : {self.content[:10]}...)'

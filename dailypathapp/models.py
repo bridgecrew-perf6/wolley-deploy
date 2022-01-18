@@ -13,7 +13,22 @@ class DailyPath(models.Model):
     last_updated = models.DateTimeField(auto_now=True)  # auto_now는 django model이 save 될 때마다 현재날짜(date.today()) 로 갱신
 
     class Meta:
-        db_table = 'dailypathapp'
+        db_table = 'dailypath'
 
     def __str__(self):
-        return f'({self.date}) {self.user} -> piechart {self.id}'
+        return f'{self.user} -> (daily_path_id : {self.id}, date: {self.date})'
+
+
+class GPSLog(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column="GPSlog_id")
+    daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='gpslogs')
+
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        db_table = 'gpslog'
+
+    def __str__(self):
+        return f'({self.latitude}, {self.longitude}) {self.timestamp}'

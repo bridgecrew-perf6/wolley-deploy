@@ -18,4 +18,4 @@ class Label(models.Model):
         db_table = 'label'
 
     def __str__(self):
-        return f'{self.interval} -> {self.name}'
+        return f'{self.interval} -> (label_id: {self.id}, name: {self.name})'

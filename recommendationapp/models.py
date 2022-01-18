@@ -16,4 +16,4 @@ class Recommendation(models.Model):
         db_table = 'recommendation'
 
     def __str__(self):
-        return f'{self.pie_chart} -> recommendation {self.id}'
+        return f'{self.pie_chart} -> (recommendation_id: {self.id}, place: {self.place})'

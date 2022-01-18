@@ -15,4 +15,4 @@ class AppUser(models.Model):
         db_table = "app_user"
 
     def __str__(self):
-        return self.user.username
+        return f'(username: {self.user.username[:7]}.., id : {self.user.id})'

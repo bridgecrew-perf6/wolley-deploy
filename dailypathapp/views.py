@@ -8,22 +8,39 @@ from django.utils.decorators import method_decorator
 
 import datetime
 
-from .dummy_communication import *
+import dailypathapp.dummy_communication as dum
+import dailypathapp.stayPointDetect as sp
+from dailypathapp.models import DailyPath
 
 
-def parse_time_sequence(time_sequence):
-    datetimes = list()
-    coordinates = list()
-    for data in time_sequence:
-        # time info
-        datetime_str = data["time"]
-        datetime_obj = datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
-        datetimes.append(datetime_obj)
+def generate_points_from_DB(uuid):
+    today = datetime.date.today()
+    dailypath_obj = DailyPath.objects.filter(user__user__username=uuid, date__year=today.year, date__month=today.month, date__day=today.day)
+    if len(dailypath_obj) == 0:
+        return []
 
-        # 좌표 info
-        y, x = map(float, data["coordinate"])
-        coordinates.append((y, x))
-    return datetimes, coordinates
+    time_seq = []
+    dailypath_obj = dailypath_obj[0]
+    for gpslog in dailypath_obj.gpslogs.all():
+        latitude = gpslog.latitude
+        longitude = gpslog.longitude
+        dateTime = str(gpslog.timestamp)
+        time_seq.append((latitude, longitude, dateTime))
+    points = sp.generatePoints(time_seq)
+
+    return points
+
+
+def generate_points_from_request(request):
+    time_seq = []
+    for data in request.data["timeSequence"]:
+        latitude = data["coordinate"]["latitude"]
+        longitude = data["coordinate"]["longitude"]
+        dateTime = datetime.datetime.strptime(data["time"], "%Y-%m-%d %H:%M:%S")
+        time_seq.append((latitude, longitude, dateTime))
+    points = sp.generatePoints(time_seq)
+
+    return points
 
 
 def make_intervals(datetimes, coordinates):
@@ -44,21 +61,12 @@ class PiechartRequestView(APIView):
         """
         FE와 dummy data 통신
         """
-        save_raw_in_test_table(request)
-        content = make_dummy_piechart_info_ver2()
+        dum.save_raw_in_test_table(request)
+        content = dum.make_dummy_piechart_info_ver2()
         return Response(content, status=status.HTTP_200_OK)
 
     # def post(self, request):
-    #     # data parsing
-    #     content = request.data
-    #
-    #     uuid = content["uuid"]
-    #     piechart_id = content["piechart_id"]
-    #     time_sequence = content["time_sequence"]
-    #     datetimes, coordinates = parse_time_sequence(time_sequence)
-    #
-    #     ## make intervals
-    #     intervals = make_intervals(datetimes, coordinates)
-    #     save_intervals(uuid, piechart_id, intervals)
-    #
-    #     return Response("ok", status=status.HTTP_200_OK)
+    #     points = generate_points_from_DB(request.data["uuid"])
+    #     points += generate_points_from_request(request)
+    #     stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
+    #     return Response(stayPointCenter, status=status.HTTP_200_OK)

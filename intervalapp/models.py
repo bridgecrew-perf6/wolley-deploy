@@ -18,6 +18,7 @@ class Interval(models.Model):
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
 
+    percent = models.FloatField(default=0.0)
     EmotionType = models.TextChoices('emotion', 'positive normal negative')
     emotion = models.CharField(max_length=20, choices=EmotionType.choices, null=True)
 

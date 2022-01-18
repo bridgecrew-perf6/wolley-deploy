@@ -6,5 +6,5 @@ local mode <-> deploy mode 스위치 때 수정해야할 곳
 
 myapi/settings/__init__.py 
 # from .local import *  # local mode
-ifrom .deploy import *  # deploy mode
+from .deploy import *  # deploy mode
 """

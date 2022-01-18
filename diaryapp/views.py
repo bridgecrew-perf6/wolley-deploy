@@ -15,6 +15,7 @@ from django.utils.decorators import method_decorator
 from dailypathapp.models import DailyPath
 from diaryapp.models import Diary
 from intervalapp.models import Interval
+from accountapp.models import AppUser
 
 
 def make_dummy_diary_info():
@@ -47,11 +48,17 @@ class DiaryRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        user = request.headers['user']
-        check_date = date.today() - timedelta(2)
+        request_user = request.headers['user']
+        check_date = date.today() - timedelta(1)
 
         try:
-            daily_path = DailyPath.objects.get(user__user__username=user, date=check_date)
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음")
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            daily_path = DailyPath.objects.get(user=user, date=check_date)
         except DailyPath.DoesNotExist:
             content = make_response_content("daily path 없음")
             return Response(content, status=status.HTTP_400_BAD_REQUEST)

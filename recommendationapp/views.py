@@ -12,7 +12,7 @@ class RecommendationRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        uuid = request.GET["uuid"]
+        user = request.headers["user"]
         content = dict()
         content["responseMsg"] = "성공"
         content["data"] = dict()

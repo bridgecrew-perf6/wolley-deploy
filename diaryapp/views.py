@@ -48,7 +48,7 @@ class DiaryRequestView(APIView):
 
     def get(self, request):
         user = request.headers['user']
-        check_date = date.today() - timedelta(1)
+        check_date = date.today() - timedelta(2)
 
         try:
             daily_path = DailyPath.objects.get(user__user__username=user, date=check_date)
@@ -70,8 +70,7 @@ class DiaryRequestView(APIView):
             request_data = json.dumps({"data": list(intervals.values())}, cls=DjangoJSONEncoder)
 
             # 일기 생성 요청
-            # res = requests.post("http://gpu-cloud-cpu32.dakao.io:5435/diary/",data=data)
-            res = requests.post("http://127.0.0.1:8080/diary/", data=request_data)
+            res = requests.post("http://34.97.149.180/diary/", data=request_data)
 
             # 일기 객체 생성
             diary_content = res.json()['content']

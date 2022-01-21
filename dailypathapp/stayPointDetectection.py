@@ -112,6 +112,7 @@ def main():
         latitude = float(split_obj[0])
         longitude = float(split_obj[1])
         dateTime = f"{split_obj[-2]} {split_obj[-1]}"
+
         time_sequence.append((latitude, longitude, dateTime))
     # file close
     fp.close()

@@ -18,27 +18,10 @@ from intervalapp.models import Interval
 from accountapp.models import AppUser
 
 
-def make_dummy_diary_info():
-    content = dict()
-    content["responseMsg"] = "성공"
-
-    content["data"] = dict()
-    content["data"]["id"] = 1
-    content["data"]["date"] = "2022-01-04 18:50:10"
-    content["data"]["content"] = "10시에 출근하고 12시에 퇴근하는 직장에 다니는 평범한 직장인이었다. " \
-                                 "회사에서는 업무가 많아 야근을 밥먹듯이 하는 사람이었고 집에 와서는 TV와 스마트폰을 끼고 살았다. " \
-                                 "주말이 되면 잠만 자는 사람이었다. 그런데 어느 날부터인가 갑자기 허리가 아프기 시작했다. " \
-                                 "허리를 굽히거나 펼 때, 앉았다가 일어날 때, 심지어 기침을 할 때에도 허리가 아팠다. " \
-                                 "처음에는 그냥 좀 아픈 정도였는데 시간이 갈수록 통증이 심해졌다."
-    return content
-
-
-def make_response_content(response_msg: str, data: Dict = None) -> Dict:
+def make_response_content(response_msg: str, data: Dict = {}) -> Dict:
     content = dict()
     content['responseMsg'] = response_msg
-
-    if data:
-        content['data'] = data
+    content['data'] = data
 
     return content
 
@@ -49,7 +32,7 @@ class DiaryRequestView(APIView):
 
     def get(self, request):
         request_user = request.headers['user']
-        check_date = date.today() - timedelta(1)
+        request_date = date.today() - timedelta(1)
 
         try:
             user = AppUser.objects.get(user__username=request_user)
@@ -58,28 +41,31 @@ class DiaryRequestView(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            daily_path = DailyPath.objects.get(user=user, date=check_date)
+            daily_path = DailyPath.objects.get(user=user, date=request_date)
         except DailyPath.DoesNotExist:
             content = make_response_content("daily path 없음")
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        print(daily_path.id)
         try:
             diary = Diary.objects.get(daily_path=daily_path.id)
+            print(diary)
             data = {
                 "id": diary.id,
-                "date": check_date,
+                "date": request_date,
                 "content": diary.content
             }
             content = make_response_content("성공", data)
             return Response(content, status=status.HTTP_200_OK)
         except Diary.DoesNotExist:
-            intervals = Interval.objects.filter(daily_path=daily_path.id)
+            intervals = Interval.objects.filter(daily_path=daily_path.id).order_by('start_time')
+            print(intervals)
             request_data = json.dumps({"data": list(intervals.values())}, cls=DjangoJSONEncoder)
-
+            print(request_data)
             # 일기 생성 요청
-            res = requests.post("http://34.97.149.180/diary/", data=request_data)
-
+            # res = requests.post("http://34.97.149.180/diary/", data=request_data)
+            res = requests.post("http://127.0.0.1:8080/diary/", data=request_data)
             # 일기 객체 생성
+            print(res)
             diary_content = res.json()['content']
             new_diary = Diary(daily_path=daily_path, content=diary_content)
             new_diary.save()
@@ -87,7 +73,7 @@ class DiaryRequestView(APIView):
             # 일기 객체 전달
             data = {
                 "id": new_diary.id,
-                "date": check_date,
+                "date": request_date,
                 "content": new_diary.content
             }
             content = make_response_content("일기 생성 성공", data)
@@ -95,3 +81,18 @@ class DiaryRequestView(APIView):
 
         content = make_response_content("잘못된 접근")
         return Response(content, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request):
+        diary_id = int(request.data['id'])
+        update_content = request.data['content']
+        try:
+            diary_obj = Diary.objects.get(id=diary_id)
+        except Diary.DoesNotExist:
+            content = make_response_content("diary 없음")
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        diary_obj.content = update_content
+        diary_obj.save()
+
+        content = make_response_content("성공")
+        return Response(content, status=status.HTTP_200_OK)

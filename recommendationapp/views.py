@@ -17,7 +17,7 @@ class RecommendationRequestView(APIView):
         content["responseMsg"] = "성공"
         content["data"] = dict()
         content["data"]["id"] = 2
-        content["data"]["place"] = "집사야 오늘 날씨가 좋은데 사브레 과자 전문점에 가보는 거 어때?"
+        content["data"]["place"] = "집사야 오늘 날씨가 좋은데 \n사브레 과자 전문점에 가보는 거 어때?"
 
         return Response(content, status=status.HTTP_200_OK)
 

@@ -13,24 +13,66 @@ from intervalapp.models import Interval
 class IntervalRequestView(APIView):
     permission_classes = [AllowAny]
 
-    def validate_emotion_type(self, choice):
-        kor2eng = {"긍정": "positive", "중립": "normal", "부정": "normal"}
-        return kor2eng[choice]
+    def get(self, request):
+        request_interval_id = request.headers['intervalId']
+        content = dict()
+
+        try:
+            interval_obj = Interval.objects.get(id=request_interval_id)
+        except Interval.DoesNotExist:
+            content['responseMsg'] = "Interval 기록 없음"
+            content['data'] = dict()
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        content['responseMsg'] = "성공"
+        content['data'] = dict()
+        content['data']['id'] = interval_obj.id
+        content['data']['category'] = interval_obj.category
+        content['data']['location'] = interval_obj.location
+        content['data']['address'] = interval_obj.address
+        content['data']['coordinate'] = dict()
+        content['data']['coordinate']['latitude'] = interval_obj.latitude
+        content['data']['coordinate']['longitude'] = interval_obj.longitude
+        content['data']['percnet'] = interval_obj.percent
+
+        return Response(content, status=status.HTTP_200_OK)
+
+    # def validate_emotion_type(self, choice):
+    #     kor2eng = {"긍정": "positive", "중립": "normal", "부정": "normal"}
+    #     return kor2eng[choice]
 
     def update_interval(self, request):
         # search
         interval_id = request.data["intervalId"]
-        interval_obj = Interval.objects.filter(id=interval_id)[0]
+        content = dict()
+
+        try:
+            interval_obj = Interval.objects.get(id=interval_id)
+        except Interval.DoesNotExist:
+            content['responseMsg'] = "Interval 기록 없음"
+            content['data'] = dict()
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         # update
         interval_obj.latitude = request.data["coordinate"]["latitude"]
         interval_obj.longitude = request.data["coordinate"]["longitude"]
-        interval_obj.category = request.data["intervalCategory"]
-        interval_obj.location = request.data["intervalLocation"]
-        interval_obj.emotion = self.validate_emotion_type(request.data["emotion"])
+        interval_obj.category = request.data["category"]
+        interval_obj.location = request.data["location"]
 
         interval_obj.save()
 
+        content['responseMsg'] = "성공"
+        content['data'] = dict()
+        content['data']['id'] = interval_obj.id
+        content['data']['category'] = interval_obj.category
+        content['data']['location'] = interval_obj.location
+        content['data']['address'] = interval_obj.address
+        content['data']['coordinate'] = dict()
+        content['data']['coordinate']['latitude'] = interval_obj.latitude
+        content['data']['coordinate']['longitude'] = interval_obj.longitude
+        content['data']['percnet'] = interval_obj.percent
+        return content
+
     def post(self, request):
-        self.update_interval(request)
-        return Response({"responseMsg": "성공"}, status=status.HTTP_200_OK)
+        content = self.update_interval(request)
+        return Response(content, status=status.HTTP_200_OK)

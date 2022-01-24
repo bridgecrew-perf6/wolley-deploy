@@ -1,7 +1,7 @@
 
 
 from dailypathapp.dummy.dummyData import data
-import dailypathapp.stayPointDetectectionBasic as sp
+import dailypathapp.stayPointDetectionBasic as sp
 
 
 def make_dummy_timestamps():

@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 import datetime
 
 import dailypathapp.dummy.dummyCommunication as dum
-import dailypathapp.stayPointDetectectionBasic as sp
+import dailypathapp.stayPointDetectionBasic as sp
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
 from intervalapp.models import Interval

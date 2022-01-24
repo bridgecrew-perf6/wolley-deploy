@@ -13,11 +13,13 @@ import dailypathapp.stayPointDetectection as sp
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
 from intervalapp.models import Interval
+from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs
 
 
 def generate_points_from_DB(uuid):
     today = datetime.date.today()
-    dailypath_obj = DailyPath.objects.filter(user__user__username=uuid, date__year=today.year, date__month=today.month, date__day=today.day)
+    dailypath_obj = DailyPath.objects.filter(user__user__username=uuid, date__year=today.year, date__month=today.month,
+                                             date__day=today.day)
     if len(dailypath_obj) == 0:
         return []
 
@@ -35,7 +37,7 @@ def generate_points_from_DB(uuid):
 
 def generate_points_from_request(request_dict):
     time_seq = []
-    for data in request_dict["timeSequence"]: # 추후 request.data로 고치면 됨
+    for data in request_dict["timeSequence"]:  # 추후 request.data로 고치면 됨
         latitude = data["coordinate"]["latitude"]
         longitude = data["coordinate"]["longitude"]
         dateTime = data["time"]
@@ -93,52 +95,28 @@ class PathDailyRequestView(APIView):
     #     return Response(stayPointCenter, status=status.HTTP_200_OK)
 
 
-
 @method_decorator(csrf_exempt, name='dispatch')
 class MonthlyRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        request_user = request.headers['user']
-        request_date = request.headers['date']
-        year, month, _ = request_date.split('-')
-
-        content = dict()
-
-        try:
-            user = AppUser.objects.get(user__username=request_user)
-        except AppUser.DoesNotExist:
-            content['responseMsg'] = "User 없음"
-            content['data'] = list()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            daily_path_list = DailyPath.objects.filter(user=user, date__year=year, date__month=month)
-        except DailyPath.DoesNotExist :
-            content['responseMsg'] = "Monthly 기록 없음"
-            content['data'] = list()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        content['responseMsg'] = "성공"
-        content['data'] = list()
-
-        for daily_path in daily_path_list:
-            print(daily_path)
-            interval_list = Interval.objects.filter(daily_path_id=daily_path.id).order_by('start_time')
-            daily_path_data = dict()
-            daily_path_data['id'] = daily_path.id
-            daily_path_data['date'] = daily_path.date
-            daily_path_data['info'] = list()
-            for interval in interval_list:
-                interval_data = dict()
-                interval_data['id'] = interval.id
-                interval_data['category'] = interval.category
-                interval_data['percent'] = interval.percent
-                daily_path_data['info'].append(interval_data)
-
-            content['data'].append(daily_path_data)
-
-        return Response(content, status=status.HTTP_200_OK)
+        content, status_code, daily_path_objs = check_daily_path_objs(request)
+        if status_code == status.HTTP_200_OK:
+            for daily_path_obj in daily_path_objs:
+                interval_objs = Interval.objects.filter(daily_path_id=daily_path_obj.id).order_by('start_time')
+                daily_path_data = {
+                    "id": daily_path_obj.id,
+                    "date": daily_path_obj.date,
+                    "info": [
+                        {
+                            "id": interval_obj.id,
+                            "category": interval_obj.category,
+                            "percent": interval_obj.percent
+                        } for interval_obj in interval_objs
+                    ]
+                }
+                content['data'].append(daily_path_data)
+        return Response(content, status=status_code)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -146,46 +124,17 @@ class PieChartRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        request_user = request.headers['user']
-        request_date = request.headers['date']
-        content = dict()
-
-        try:
-            user = AppUser.objects.get(user__username=request_user)
-        except AppUser.DoesNotExist:
-            content['responseMsg'] = "User 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            daily_path = DailyPath.objects.get(user=user, date=request_date)
-        except DailyPath.DoesNotExist:
-            content['responseMsg'] = "daily 기록 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            interval_list = Interval.objects.filter(daily_path=daily_path.id).order_by('start_time')
-        except Interval.DoesNotExist:
-            content['responseMsg'] = "Interval 기록 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        content['responseMsg'] = "성공"
-        content['data'] = dict()
-        content['data']['id'] = daily_path.id
-        content['data']['date'] = daily_path.date
-        content['data']['info'] = list()
-
-        for interval in interval_list:
-            interval_data = dict()
-            interval_data['id'] = interval.id
-            interval_data['category'] = interval.category
-            interval_data['location'] = interval.location
-            interval_data['percent'] = interval.percent
-            content['data']['info'].append(interval_data)
-
-        return Response(content, status=status.HTTP_200_OK)
+        content, status_code, interval_objs = check_interval_objs(request)
+        if status_code == status.HTTP_200_OK:
+            content['data']['info'] = [
+                {
+                    "id": interval_obj.id,
+                    "category": interval_obj.category,
+                    "location": interval_obj.location,
+                    "percent": interval_obj.percent
+                } for interval_obj in interval_objs
+            ]
+        return Response(content, status=status_code)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -193,44 +142,16 @@ class MapRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        request_user = request.headers['user']
-        request_date = request.headers['date']
-        content = dict()
-
-        try:
-            user = AppUser.objects.get(user__username=request_user)
-        except AppUser.DoesNotExist:
-            content['responseMsg'] = "User 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            daily_path = DailyPath.objects.get(user=user, date=request_date)
-        except DailyPath.DoesNotExist:
-            content['responseMsg'] = "daily 기록 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            interval_list = Interval.objects.filter(daily_path=daily_path.id).order_by('start_time')
-        except Interval.DoesNotExist:
-            content['responseMsg'] = "Interval 기록 없음"
-            content['data'] = dict()
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        content['responseMsg'] = "성공"
-        content['data'] = dict()
-        content['data']['id'] = daily_path.id
-        content['data']['date'] = daily_path.date
-        content['data']['info'] = list()
-
-        for interval in interval_list:
-            interval_data = dict()
-            interval_data['id'] = interval.id
-            interval_data['address'] = interval.address
-            interval_data['coordinate'] = dict()
-            interval_data['coordinate']['latitude'] = interval.latitude
-            interval_data['coordinate']['longitude'] = interval.longitude
-            content['data']['info'].append(interval_data)
-
-        return Response(content, status=status.HTTP_200_OK)
+        content, status_code, interval_objs = check_interval_objs(request)
+        if status_code == status.HTTP_200_OK:
+            content['data']['info'] = [
+                {
+                    "id": interval_obj.id,
+                    "address": interval_obj.address,
+                    "coordinates": {
+                        "latitude": interval_obj.latitude,
+                        "longitude": interval_obj.longitude
+                    }
+                } for interval_obj in interval_objs
+            ]
+        return Response(content, status=status_code)

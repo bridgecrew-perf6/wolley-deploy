@@ -1,1 +1,1 @@
-dummy file2
+dummy file

@@ -122,7 +122,7 @@ def main():
     time_sequence = []
 
     # file open
-    fp = open("gps_logs.plt", 'r')
+    fp = open("./dummy/gps_logs.plt", 'r')
 
     lines = fp.readlines()[6:]
     for line in lines:

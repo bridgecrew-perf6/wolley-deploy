@@ -8,8 +8,8 @@ from django.utils.decorators import method_decorator
 
 import datetime
 
-import dailypathapp.dummy_communication as dum
-import dailypathapp.stayPointDetectection as sp
+import dailypathapp.dummy.dummyCommunication as dum
+import dailypathapp.stayPointDetectectionBasic as sp
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
 from intervalapp.models import Interval
@@ -35,15 +35,25 @@ def generate_points_from_DB(uuid):
     return points
 
 
-def generate_points_from_request(request_dict):
+def generate_points_from_reqeust_old_ver(request_dict):
     time_seq = []
-    for data in request_dict["timeSequence"]:  # 추후 request.data로 고치면 됨
+    for data in request_dict["time_sequence"]:
+        latitude = data["coordinate"][0]
+        longitude = data["coordinate"][1]
+        dateTime = data["time"]
+        time_seq.append((latitude, longitude, dateTime))
+    points = sp.generatePoints(time_seq)
+    return points
+
+
+def generate_points_from_request_new_ver(request_dict):
+    time_seq = []
+    for data in request_dict["timeSequence"]: # 추후 request.data로 고치면 됨
         latitude = data["coordinate"]["latitude"]
         longitude = data["coordinate"]["longitude"]
         dateTime = data["time"]
         time_seq.append((latitude, longitude, dateTime))
     points = sp.generatePoints(time_seq)
-
     return points
 
 
@@ -61,13 +71,13 @@ def save_intervals(uuid, piechart_id, intervals):
 class PathDailyRequestView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        """
-        FE와 dummy data 통신
-        """
-        dum.save_raw_in_test_table(request)
-        content = dum.make_dummy_piechart_info_ver2()
-        return Response(content, status=status.HTTP_200_OK)
+    # def post(self, request):
+    #     """
+    #     FE와 dummy data 통신
+    #     """
+    #     dum.save_raw_in_test_table(request)
+    #     content = dum.make_dummy_piechart_info_ver2()
+    #     return Response(content, status=status.HTTP_200_OK)
 
     # dummy gps data로 통신
     # def post(self, request):
@@ -88,11 +98,11 @@ class PathDailyRequestView(APIView):
     #     return Response(content, status=status.HTTP_200_OK)
 
     # for real 통신
-    # def post(self, request):
-    #     points = generate_points_from_DB(request.data["uuid"])
-    #     points += generate_points_from_request(request)
-    #     stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
-    #     return Response(stayPointCenter, status=status.HTTP_200_OK)
+    def post(self, request):
+        points = generate_points_from_DB(request.data["uuid"])
+        points += generate_points_from_request_new_ver(request.data)
+        stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
+        return Response(stayPointCenter, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

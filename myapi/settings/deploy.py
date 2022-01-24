@@ -17,6 +17,7 @@ environ.Env.read_env(
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = read_secret("DJANGO_SECRET_KEY")
+MY_REST_API_KEY = read_secret("MY_REST_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False

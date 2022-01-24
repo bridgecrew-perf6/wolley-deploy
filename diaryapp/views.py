@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from diaryapp.models import Diary
-from intervalapp.models import Interval
+from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, check_daily_path_obj
 
 
@@ -31,7 +31,7 @@ class DiaryRequestView(APIView):
         if status_code == status.HTTP_200_OK:
             diary_obj, created = Diary.objects.get_or_create(daily_path=daily_path_obj.id)
             if created:
-                intervals = Interval.objects.filter(daily_path=daily_path_obj.id).order_by('start_time')
+                intervals = IntervalStay.objects.filter(daily_path=daily_path_obj.id).order_by('start_time')
 
                 request_data = json.dumps({"data": list(intervals.values())}, cls=DjangoJSONEncoder)
                 # res = requests.post("http://34.97.149.180/diary/", data=request_data)

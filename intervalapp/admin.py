@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Interval
+from .models import IntervalStay
+from .models import IntervalMove
 
 # from .models import TimeRange
 
@@ -11,5 +12,6 @@ from .models import Interval
 #
 # admin.site.register(Interval, IntervalAdmin)
 
-admin.site.register(Interval)
+admin.site.register(IntervalStay)
+admin.site.register(IntervalMove)
 # admin.site.register(TimeRange)

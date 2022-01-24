@@ -6,7 +6,7 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from intervalapp.models import Interval
+from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, make_interval_to_data
 
 
@@ -18,8 +18,8 @@ class IntervalRequestView(APIView):
         request_interval_id = request.headers['intervalId']
 
         try:
-            interval_obj = Interval.objects.get(id=request_interval_id)
-        except Interval.DoesNotExist:
+            interval_obj = IntervalStay.objects.get(id=request_interval_id)
+        except IntervalStay.DoesNotExist:
             content = make_response_content("Interval 기록 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
@@ -31,8 +31,8 @@ class IntervalRequestView(APIView):
         request_interval_id = request.data["intervalId"]
 
         try:
-            interval_obj = Interval.objects.get(id=request_interval_id)
-        except Interval.DoesNotExist:
+            interval_obj = IntervalStay.objects.get(id=request_interval_id)
+        except IntervalStay.DoesNotExist:
             content = make_response_content("Interval 기록 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 

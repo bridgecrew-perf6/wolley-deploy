@@ -9,10 +9,10 @@ from django.utils.decorators import method_decorator
 import datetime
 
 import dailypathapp.dummy.dummyCommunication as dum
-import dailypathapp.stayPointDetectionBasic as sp
+import dailypathapp.stayPointDetectionDensity as sp
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
-from intervalapp.models import Interval
+from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs
 
 
@@ -57,7 +57,11 @@ def generate_points_from_request_new_ver(request_dict):
     return points
 
 
-def make_intervals(datetimes, coordinates):
+def gpslogs2intervals(date):
+    """
+    1. 특정 날짜의 gpslogs 객체들을 가져온다.
+    2. 이 정보를 interval 객체로 환원한다.
+    """
     # make intervals and save intervals
     pass
     # return intervals
@@ -102,7 +106,18 @@ class PathDailyRequestView(APIView):
         points = generate_points_from_DB(request.data["uuid"])
         points += generate_points_from_request_new_ver(request.data)
         stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
-        return Response(stayPointCenter, status=status.HTTP_200_OK)
+
+        import time
+        content = dict()
+        asc = 65
+        time_format = '%Y-%m-%d %H:%M:%S'
+        for obj in stayPointCenter:
+            name = f"{chr(asc)}장소"
+            content[name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
+            asc += 1
+        print(stayPointCenter)
+        print(content, "!!!!!!!!!!!!!!!!!!")
+        return Response(content, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -113,7 +128,7 @@ class MonthlyRequestView(APIView):
         content, status_code, daily_path_objs = check_daily_path_objs(request)
         if status_code == status.HTTP_200_OK:
             for daily_path_obj in daily_path_objs:
-                interval_objs = Interval.objects.filter(daily_path_id=daily_path_obj.id).order_by('start_time')
+                interval_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id).order_by('start_time')
                 daily_path_data = {
                     "id": daily_path_obj.id,
                     "date": daily_path_obj.date,

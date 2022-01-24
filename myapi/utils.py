@@ -6,7 +6,7 @@ from rest_framework import status
 
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
-from intervalapp.models import Interval
+from intervalapp.models import IntervalStay
 
 
 def make_response_content(response_msg: str, data: Union[Dict, List]) -> Dict:
@@ -23,7 +23,7 @@ def check_interval_objs(request: HttpRequest) -> (Dict, int, QuerySet):
     try:
         user = AppUser.objects.get(user__username=request_user)
         daily_path = DailyPath.objects.get(user=user, date=request_date)
-        interval_objs = Interval.objects.filter(daily_path=daily_path.id).order_by('start_time')
+        interval_objs = IntervalStay.objects.filter(daily_path=daily_path.id).order_by('start_time')
         data = {
             "id": daily_path.id,
             "date": daily_path.date,
@@ -35,7 +35,7 @@ def check_interval_objs(request: HttpRequest) -> (Dict, int, QuerySet):
         content = make_response_content("User 없음", {})
     except DailyPath.DoesNotExist:
         content = make_response_content("Daily 기록 없음", {})
-    except Interval.DoesNotExist:
+    except IntervalStay.DoesNotExist:
         content = make_response_content("Interval 기록 없음", {})
     return content, status.HTTP_400_BAD_REQUEST, None
 
@@ -71,7 +71,7 @@ def check_daily_path_obj(request: HttpRequest) -> (Dict, int, DailyPath):
     return content, status.HTTP_400_BAD_REQUEST, None
 
 
-def make_interval_to_data(interval_obj: Interval) -> Dict:
+def make_interval_to_data(interval_obj: IntervalStay) -> Dict:
     data = {
         "id": interval_obj.id,
         "category": interval_obj.category,

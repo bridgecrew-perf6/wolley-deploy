@@ -1,3 +1,8 @@
+from datetime import datetime
+import time
+from typing import List, Dict, Tuple
+
+from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,14 +11,8 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
-import time
-
-import dailypathapp.dummy.dummyCommunication as dum
-import dailypathapp.stayPointDetectionDensity as sp
-from dailypathapp.utils import coordinate2address, get_visited_place
+from dailypathapp.stayPointDetectionDensity import generatePoints, stayPointExtraction
+from dailypathapp.utils import coordinate2address, get_visited_place, get_distance
 
 from accountapp.models import AppUser
 
@@ -21,197 +20,211 @@ from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+def make_date_sequence(time_sequence: List[Dict]) -> (List[List], List[str]):
+    date_sequence = []
+    date_list = []
+    flag = 0
+    for idx in range(len(time_sequence) - 1):
+        if time_sequence[idx]['time'][:10] != time_sequence[idx + 1]['time'][:10]:
+            if flag != 0:
+                data = [{
+                    "time": time_sequence[flag]['time'][:10] + " 00:00:00",
+                    "coordinates": {
+                        "longitude": time_sequence[flag]['coordinates']['longitude'],
+                        "latitude": time_sequence[flag]['coordinates']['latitude']
+                    }
+                }]
+            else:
+                data = []
+            data.extend(time_sequence[flag:idx + 1])
+            data.append(
+                {
+                    "time": time_sequence[idx]['time'][:10] + " 23:59:59",
+                    "coordinates": {
+                        "longitude": time_sequence[idx]['coordinates']['longitude'],
+                        "latitude": time_sequence[idx]['coordinates']['latitude']
+                    }
+                }
+            )
+            date_sequence.append(data)
+            date_list.append(time_sequence[idx]['time'][:10])
+            flag = idx + 1
+
+    if flag != len(time_sequence):
+        data = [{
+            "time": time_sequence[flag]['time'][:10] + " 00:00:00",
+            "coordinates": {
+                "longitude": time_sequence[flag]['coordinates']['longitude'],
+                "latitude": time_sequence[flag]['coordinates']['latitude']
+            }
+        }]
+        data.extend(time_sequence[flag:idx + 1])
+        data.append(
+            {
+                "time": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                "coordinates": {
+                    "longitude": time_sequence[idx]['coordinates']['longitude'],
+                    "latitude": time_sequence[idx]['coordinates']['latitude']
+                }
+            }
+        )
+        date_sequence.append(data)
+        date_list.append(time_sequence[flag]['time'][:10])
+    return date_sequence, date_list
 
 
-def generate_points_from_DB(uuid):
-    today = date.today()
-    dailypath_obj = DailyPath.objects.filter(user__user__username=uuid, date__year=today.year, date__month=today.month,
-                                             date__day=today.day)
-    if len(dailypath_obj) == 0:
-        return []
-
-    time_seq = []
-    dailypath_obj = dailypath_obj[0]
-    for gpslog in dailypath_obj.gpslogs.all():
-        latitude = gpslog.latitude
-        longitude = gpslog.longitude
-        dateTime = str(gpslog.timestamp)
-        time_seq.append((latitude, longitude, dateTime))
-    points = sp.generatePoints(time_seq)
-
-    return points
+def make_gps_logs(date_sequence: List[Dict]) -> List[Tuple]:
+    gps_logs = [
+        (
+            date['coordinates']['latitude'],
+            date['coordinates']['longitude'],
+            date['time']
+        ) for date in date_sequence
+    ]
+    return gps_logs
 
 
-def generate_points_from_reqeust_old_ver(request_dict):
-    time_seq = []
-    for data in request_dict["time_sequence"]:
-        latitude = data["coordinate"][0]
-        longitude = data["coordinate"][1]
-        dateTime = data["time"]
-        time_seq.append((latitude, longitude, dateTime))
-    points = sp.generatePoints(time_seq)
-    return points
+def make_percent(start: str, end: str) -> float:
+    _, start_time = start.split()
+    _, end_time = end.split()
+
+    start_hour, start_min, start_sec = map(int, start_time.split(':'))
+    end_hour, end_min, end_sec = map(int, end_time.split(':'))
+
+    start_total = start_hour * 3600 + start_min * 60 + start_sec
+    end_total = end_hour * 3600 + end_min * 60 + end_sec
+
+    return round((end_total - start_total) / 86400, 2)
 
 
-def generate_points_from_request_new_ver(request_dict):
-    time_seq = []
-    for data in request_dict["timeSequence"]:  # 추후 request.data로 고치면 됨
-        latitude = data["coordinate"]["latitude"]
-        longitude = data["coordinate"]["longitude"]
-        dateTime = data["time"]
-        time_seq.append((latitude, longitude, dateTime))
-    points = sp.generatePoints(time_seq)
-    return points
+def make_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
+    print("Interval Stay")
+    for point in stay_point_centers:
+        start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
+        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.leaveTime))
+        percent = make_percent(start_time, end_time)
+        latitude = point.latitude
+        longitude = point.longitude
+        address = coordinate2address(point.latitude, point.longitude)
+        IntervalStay.objects.create(
+            daily_path=daily_path,
+            start_time=start_time,
+            end_time=end_time,
+            address=address,
+            category=get_visited_place(latitude, longitude, app_user),
+            location="?",
+            latitude=latitude,
+            longitude=longitude,
+            percent=percent
+        )
 
+    # Interval Move
+    print("Interval Move")
+    for idx in range(len(stay_point_centers) - 1):
+        before_point = stay_point_centers[idx]
+        after_point = stay_point_centers[idx + 1]
 
-def gpslogs2intervals(date):
-    """
-    1. 특정 날짜의 gpslogs 객체들을 가져온다.
-    2. 이 정보를 interval 객체로 환원한다.
-    """
-    # make intervals and save intervals
-    pass
-    # return intervals
-
-
-def save_intervals(uuid, piechart_id, intervals):
-    pass
+        start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(before_point.leaveTime))
+        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(after_point.arriveTime))
+        percent = make_percent(start_time, end_time)
+        IntervalMove.objects.create(
+            daily_path=daily_path,
+            start_time=start_time,
+            end_time=end_time,
+            transport="?",
+            percent=percent
+        )
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PathDailyRequestView(APIView):
     permission_classes = [AllowAny]
 
-    # def post(self, request):
-    #     """
-    #     FE와 dummy data 통신
-    #     """
-    #     dum.save_raw_in_test_table(request)
-    #     content = dum.make_dummy_piechart_info_ver2()
-    #     return Response(content, status=status.HTTP_200_OK)
-
-    # dummy gps data로 통신
-    # def post(self, request):
-    #     request = dum.make_dummy_timestamps()
-    #     points = generate_points_from_DB(request["uuid"])
-    #     points += generate_points_from_request(request)
-    #     stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
-    #
-    #     import time
-    #     content = dict()
-    #     asc = 65
-    #     time_format = '%Y-%m-%d %H:%M:%S'
-    #     for obj in stayPointCenter:
-    #         name = f"{chr(asc)}장소"
-    #         content[name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
-    #         asc += 1
-    #
-    #     return Response(content, status=status.HTTP_200_OK)
-
     # for real 통신
     def post(self, request):
-        # 해당 uuid의 사용자가 있는지 찾고, 없으면, DB에 등록
-        uuid = request.data["uuid"]
-        if not AppUser.objects.filter(user__username=uuid).exists():
-            AppUser.objects.create(user__username=uuid)
+        # user 확인
+        request_user = request.data['user']
+        user, created = User.objects.get_or_create(username=request_user)
+        if created:
+            user.set_password('123')
+            user.save()
 
-        time_sequence = request.data["timeSequence"]
-        for time_info_requested in time_sequence:
-            # 해당 날짜와 관련된 DailyPath 객체 우선 생성
-            time_obj = time.strptime(time_info_requested["time"], TIME_FORMAT)
-            datetime_obj = datetime.strptime(time_info_requested["time"], TIME_FORMAT)
-            date_obj = date.fromtimestamp(time.mktime(time_obj))
-            if not DailyPath.objects.filter(user__user__username=uuid,
-                                            date=date_obj).exists():  # 해당 날짜의 dailypath 객체 없다면 -> 만들어 줌
-                DailyPath.objects.create(user__user__username=uuid, date=date_obj)
+        app_user, _ = AppUser.objects.get_or_create(user=user)
 
-            # DailyPath 객체가 가지고 있는 날짜에 대응하는 GPSLogs 객체 생성
-            dailypath_obj = DailyPath.objects.filter(date=date_obj)[0]
-            y = time_info_requested["coordinate"]["latitude"]
-            x = time_info_requested["coordinate"]["longitude"]
-            # 후에 서비스할 때, 아래 조건문은 삭제 가능 - 여러번 실험해보는 환경에서 DB에 중복된 값이 쌓이는 현상을 방지하고자 추가하게 되었음
-            if not GPSLog.objects.filter(daily_path__user__user_username=uuid, daily_path=dailypath_obj, latitude=y,
-                                         longitude=x, timestamp=datetime_obj).exists():
-                GPSLog.objects.create(daily_path__user__user_username=uuid, daily_path=dailypath_obj, latitude=y,
-                                      longitude=x, timestamp=datetime_obj)
+        # time stamp 분리
+        time_sequence = request.data['timeSequence']
+        date_sequence, date_list = make_date_sequence(time_sequence)
 
-        if len(time_sequence) != 0:
-            oldest_date = date.fromtimestamp(time.mktime(time.strptime(time_sequence[0]["time"], TIME_FORMAT)))
-            target_date = oldest_date
-            while target_date <= date.today():
-                # GPSLogs를 이용해서 stayPointCenter 알아냄
-                GPSlog_objs = GPSLog.objects.filter(daily_path__user__user_username=uuid, daily_path__date=target_date)
-                time_sequence = []
-                for GPSlog_obj in GPSlog_objs:
-                    y = GPSlog_obj.latitude
-                    x = GPSlog_obj.longitude
-                    datetime_str = GPSlog_obj.timestamp.strftime(TIME_FORMAT)
-                    time_sequence.append((y, x, datetime_str))
+        for i in range(len(date_list)):
+            daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_list[i])
 
-                points = sp.generatePoints(time_sequence)
-                stay_point_centers, stay_points = sp.stayPointExtraction(points)
+            for date in date_sequence[i]:
+                GPSLog.objects.create(
+                    daily_path=daily_path,
+                    timestamp=datetime.strptime(date['time'], '%Y-%m-%d %H:%M:%S'),
+                    latitude=date['coordinates']['latitude'],
+                    longitude=date['coordinates']['longitude']
+                )
 
-                print(stay_point_centers)
+            gps_logs = make_gps_logs(date_sequence[i])
+            points = generatePoints(gps_logs)
+            stay_point_centers, stay_points = stayPointExtraction(points)
+            if created:
+                make_interval(app_user, daily_path, stay_point_centers)
+            else:
+                point = stay_point_centers[0]
+                interval_stay_obj = IntervalStay.objects.filter(daily_path=daily_path).order_by('start_time').last()
+                interval_move_obj = IntervalMove.objects.filter(daily_path=daily_path).order_by('start_time').last()
 
-                # 기존의 GPSLogs로 만든 IntervalStays IntervalMove 삭제
-                dailypath_obj = DailyPath.objects.filter(user__user__username=uuid, date=target_date)[0]
-                intervalstay_objs = dailypath_obj.intervalstays.all()
-                for intervalstay_obj in intervalstay_objs:
-                    intervalstay_obj.delete()
-                intervalmove_objs = dailypath_obj.intervalmoves.all()
-                for intervalmove_obj in intervalmove_objs:
-                    intervalmove_obj.delete()
+                if interval_move_obj.start_time > interval_stay_obj.start_time:
+                    start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
+                    interval_move_obj.end_time = start_time
+                    interval_move_obj.percent = make_percent(
+                        interval_move_obj.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                        interval_move_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                    )
+                    interval_move_obj.save()
+                    make_interval(app_user, daily_path, stay_point_centers)
 
-                # stayPointCenter 이용해서 IntervalStay 객체 생성
-                
+                else:
+                    d = get_distance(
+                        interval_stay_obj.latitude,
+                        interval_stay_obj.longitude,
+                        point.latitude,
+                        point.longitude
+                    )
+                    if d < 200:
+                        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.leaveTime))
+                        interval_stay_obj.end_time = end_time
+                        interval_stay_obj.save()
+                        if len(stay_point_centers) >= 2:
+                            start_time = interval_stay_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                            end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stay_point_centers[1].arriveTime))
+                            percent = make_percent(start_time, end_time)
+                            IntervalMove.objects.create(
+                                daily_path=daily_path,
+                                start_time=start_time,
+                                end_time=end_time,
+                                transport="?",
+                                percent=percent
+                            )
+                            make_interval(app_user, daily_path, stay_point_centers[1:])
+                    else:
+                        start_time = interval_stay_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
+                        percent = make_percent(start_time, end_time)
+                        IntervalMove.objects.create(
+                            daily_path=daily_path,
+                            start_time=start_time,
+                            end_time=end_time,
+                            transport="?",
+                            percent=percent
+                        )
+                        make_interval(app_user, daily_path, stay_point_centers)
 
-                # 먼저 00시 ~ 아침 출발까지 -> 집
-                IntervalStay.start_time = datetime.combine(target_date, time())  # 해당 날짜, 00시 00분
-                gpslog_obj = GPSLog.objects.filter(daily_path__user__user_username=uuid, daily_path__date=target_date)[0]
-                IntervalStay.end_time = gpslog_obj.timestamp
-                IntervalStay.address = coordinate2address(point.latitude, point.longitude)
-
-                IntervalStay.category = "집"
-                IntervalStay.location = "?"
-                IntervalStay.save()
-
-                # 머문장소들
-                for point in stay_point_centers:
-                    IntervalStay.start_time = datetime.strftime(TIME_FORMAT, datetime.localtime(point.arriveTime))
-                    IntervalStay.end_time = datetime.strftime(TIME_FORMAT, datetime.localtime(point.leaveTime))
-                    IntervalStay.address = coordinate2address(point.latitude, point.longitude)
-
-                    appuser_obj = AppUser.objects.filter(user__username=uuid)[0]
-                    IntervalStay.category = get_visited_place(point.latitude, point.longitude, appuser_obj)
-                    IntervalStay.location = "?"
-                    IntervalStay.save()
-
-                # stayPointCenter 이용해서 IntervalMove 객체 생성
-
-
-                # stay_point_centers 이용해서 Interval 객체 생성
-                # if stay
-
-                target_date += timedelta(days=1)
-
-        return Response("ok", status=status.HTTP_200_OK)
-
-        # points = generate_points_from_DB(request.data["uuid"])
-        # points += generate_points_from_request_new_ver(request.data)
-        # stayPointCenter, stayPoint = sp.stayPointExtraction(points, distThres=200, timeThres=30 * 60)
-        #
-        # import time
-        # content = dict()
-        # asc = 65
-        # time_format = '%Y-%m-%d %H:%M:%S'
-        # for obj in stayPointCenter:
-        #     name = f"{chr(asc)}장소"
-        #     content[name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
-        #     asc += 1
-        # print(stayPointCenter)
-        # print(content, "!!!!!!!!!!!!!!!!!!")
-        # return Response(content, status=status.HTTP_200_OK)
+        content = make_response_content("성공", {})
+        return Response(content, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

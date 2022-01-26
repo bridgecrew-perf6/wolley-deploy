@@ -206,6 +206,5 @@ class MapRequestView(APIView):
                     }
                 } for interval_obj in interval_stay_objs
             ]
-            info_data = sorted(info_data, key=lambda info: info['start'])
             content['data']['info'] = info_data
         return Response(content, status=status_code)

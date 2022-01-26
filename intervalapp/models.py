@@ -54,7 +54,7 @@ class IntervalMove(models.Model):
         db_table = 'intervalmove'
 
     def __str__(self):
-        return f'{self.daily_path} -> (intervalmove_id: {self.id}, category: {self.category})'
+        return f'{self.daily_path} -> (intervalmove_id: {self.id}, transport: {self.transport})'
 
 
 # class TimeRange(models.Model):

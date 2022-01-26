@@ -11,9 +11,9 @@ import datetime
 import dailypathapp.dummy.dummyCommunication as dum
 import dailypathapp.stayPointDetectionDensity as sp
 from accountapp.models import AppUser
-from dailypathapp.models import DailyPath
+from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay
-from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs
+from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
 
 def generate_points_from_DB(uuid):
@@ -178,5 +178,24 @@ class MapRequestView(APIView):
                         "longitude": interval_obj.longitude
                     }
                 } for interval_obj in interval_objs
+            ]
+        return Response(content, status=status_code)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MapLogRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        content, status_code, daily_path_obj = check_daily_path_obj(request)
+        if status_code == status.HTTP_200_OK:
+            map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj)
+            content['data']['info'] = [
+                {
+                    "coordinates": {
+                        "latitude": map_log_obj.latitude,
+                        "longitude": map_log_obj.longitude
+                    }
+                } for map_log_obj in map_log_objs
             ]
         return Response(content, status=status_code)

@@ -6,7 +6,7 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from dailypathapp.coordinate2address import coordinate2address
+from dailypathapp.utils import coordinate2address
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, make_interval_stay_to_data
 

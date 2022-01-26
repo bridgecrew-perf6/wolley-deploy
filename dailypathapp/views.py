@@ -19,8 +19,7 @@ from accountapp.models import AppUser
 
 from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
-
-from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs
+from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -302,4 +301,23 @@ class MapRequestView(APIView):
                 } for interval_obj in interval_stay_objs
             ]
             content['data']['info'] = info_data
+        return Response(content, status=status_code)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MapLogRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        content, status_code, daily_path_obj = check_daily_path_obj(request)
+        if status_code == status.HTTP_200_OK:
+            map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj)
+            content['data']['info'] = [
+                {
+                    "coordinates": {
+                        "latitude": map_log_obj.latitude,
+                        "longitude": map_log_obj.longitude
+                    }
+                } for map_log_obj in map_log_objs
+            ]
         return Response(content, status=status_code)

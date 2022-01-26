@@ -6,7 +6,7 @@ from rest_framework import status
 
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
-from intervalapp.models import IntervalStay
+from intervalapp.models import IntervalStay, IntervalMove
 
 
 def make_response_content(response_msg: str, data: Union[Dict, List]) -> Dict:
@@ -23,27 +23,29 @@ def check_interval_objs(request: HttpRequest) -> (Dict, int, QuerySet):
     try:
         user = AppUser.objects.get(user__username=request_user)
         daily_path = DailyPath.objects.get(user=user, date=request_date)
-        interval_objs = IntervalStay.objects.filter(daily_path=daily_path.id).order_by('start_time')
+        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path.id)
+        interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path.id)
         data = {
             "id": daily_path.id,
             "date": daily_path.date,
             "info": list()
         }
         content = make_response_content("성공", data)
-        return content, status.HTTP_200_OK, interval_objs
+        return content, status.HTTP_200_OK, interval_stay_objs, interval_move_objs
     except AppUser.DoesNotExist:
         content = make_response_content("User 없음", {})
     except DailyPath.DoesNotExist:
         content = make_response_content("Daily 기록 없음", {})
     except IntervalStay.DoesNotExist:
         content = make_response_content("Interval 기록 없음", {})
-    return content, status.HTTP_400_BAD_REQUEST, None
+    return content, status.HTTP_400_BAD_REQUEST, None, None
 
 
 def check_daily_path_objs(request: HttpRequest) -> (Dict, int, QuerySet):
     request_user = request.headers['user']
     request_date = request.headers['date']
     year, month, _ = request_date.split('-')
+
     try:
         user = AppUser.objects.get(user__username=request_user)
         daily_path_objs = DailyPath.objects.filter(user=user, date__year=year, date__month=month)
@@ -71,7 +73,7 @@ def check_daily_path_obj(request: HttpRequest) -> (Dict, int, DailyPath):
     return content, status.HTTP_400_BAD_REQUEST, None
 
 
-def make_interval_to_data(interval_obj: IntervalStay) -> Dict:
+def make_interval_stay_to_data(interval_obj: IntervalStay) -> Dict:
     data = {
         "id": interval_obj.id,
         "category": interval_obj.category,

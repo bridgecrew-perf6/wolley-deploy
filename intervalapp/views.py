@@ -6,8 +6,9 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from dailypathapp.coordinate2address import coordinate2address
 from intervalapp.models import IntervalStay
-from myapi.utils import make_response_content, make_interval_to_data
+from myapi.utils import make_response_content, make_interval_stay_to_data
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -22,8 +23,7 @@ class IntervalRequestView(APIView):
         except IntervalStay.DoesNotExist:
             content = make_response_content("Interval 기록 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        data = make_interval_to_data(interval_obj)
+        data = make_interval_stay_to_data(interval_obj)
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 
@@ -40,8 +40,12 @@ class IntervalRequestView(APIView):
         interval_obj.location = request.data["location"]
         interval_obj.latitude = request.data["coordinates"]["latitude"]
         interval_obj.longitude = request.data["coordinates"]["longitude"]
+        interval_obj.address = coordinate2address(
+            request.data["coordinates"]["latitude"],
+            request.data["coordinates"]["longitude"]
+        )
         interval_obj.save()
 
-        data = make_interval_to_data(interval_obj)
+        data = make_interval_stay_to_data(interval_obj)
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

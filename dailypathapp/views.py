@@ -12,7 +12,7 @@ import dailypathapp.dummy.dummyCommunication as dum
 import dailypathapp.stayPointDetectionDensity as sp
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
-from intervalapp.models import IntervalStay
+from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs
 
 
@@ -128,17 +128,31 @@ class MonthlyRequestView(APIView):
         content, status_code, daily_path_objs = check_daily_path_objs(request)
         if status_code == status.HTTP_200_OK:
             for daily_path_obj in daily_path_objs:
-                interval_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id).order_by('start_time')
+                interval_stay_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id)
+                interval_move_objs = IntervalMove.objects.filter(daily_path_id=daily_path_obj.id)
+                info_data = list()
+                info_data.extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": interval_obj.category,
+                        "percent": interval_obj.percent,
+                        "start": interval_obj.start_time
+                    } for interval_obj in interval_stay_objs
+                ])
+                info_data.extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": "이동",
+                        "percent": interval_obj.percent,
+                        "start": interval_obj.start_time
+                    } for interval_obj in interval_move_objs
+                ])
+                info_data = sorted(info_data, key=lambda info: info['start'])
+
                 daily_path_data = {
                     "id": daily_path_obj.id,
                     "date": daily_path_obj.date,
-                    "info": [
-                        {
-                            "id": interval_obj.id,
-                            "category": interval_obj.category,
-                            "percent": interval_obj.percent
-                        } for interval_obj in interval_objs
-                    ]
+                    "info": info_data
                 }
                 content['data'].append(daily_path_data)
         return Response(content, status=status_code)
@@ -149,16 +163,29 @@ class PieChartRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        content, status_code, interval_objs = check_interval_objs(request)
+        content, status_code, interval_stay_objs, interval_move_objs = check_interval_objs(request)
         if status_code == status.HTTP_200_OK:
-            content['data']['info'] = [
+            info_data = list()
+            info_data.extend([
                 {
                     "id": interval_obj.id,
                     "category": interval_obj.category,
-                    "location": interval_obj.location,
-                    "percent": interval_obj.percent
-                } for interval_obj in interval_objs
-            ]
+                    "detail": interval_obj.location,
+                    "percent": interval_obj.percent,
+                    "start": interval_obj.start_time
+                } for interval_obj in interval_stay_objs
+            ])
+            info_data.extend([
+                {
+                    "id": interval_obj.id,
+                    "category": "이동",
+                    "detail": interval_obj.transport,
+                    "percent": interval_obj.percent,
+                    "start": interval_obj.start_time
+                } for interval_obj in interval_move_objs
+            ])
+            info_data = sorted(info_data, key=lambda info: info['start'])
+            content['data']['info'] = info_data
         return Response(content, status=status_code)
 
 
@@ -167,9 +194,9 @@ class MapRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        content, status_code, interval_objs = check_interval_objs(request)
+        content, status_code, interval_stay_objs, _ = check_interval_objs(request)
         if status_code == status.HTTP_200_OK:
-            content['data']['info'] = [
+            info_data = [
                 {
                     "id": interval_obj.id,
                     "address": interval_obj.address,
@@ -177,6 +204,8 @@ class MapRequestView(APIView):
                         "latitude": interval_obj.latitude,
                         "longitude": interval_obj.longitude
                     }
-                } for interval_obj in interval_objs
+                } for interval_obj in interval_stay_objs
             ]
+            info_data = sorted(info_data, key=lambda info: info['start'])
+            content['data']['info'] = info_data
         return Response(content, status=status_code)

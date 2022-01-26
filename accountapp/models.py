@@ -11,6 +11,11 @@ class AppUser(models.Model):
         related_name='app_user'
     )  # user_id, related_name default : appuser
 
+    homelike_latitude = models.FloatField(default=0.0)
+    homelike_longitude = models.FloatField(default=0.0)
+    workingplacelike_latitude = models.FloatField(default=0.0)
+    workingplacelike_longitude = models.FloatField(default=0.0)
+
     class Meta:
         db_table = "app_user"
 

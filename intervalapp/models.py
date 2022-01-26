@@ -18,11 +18,6 @@ class IntervalStay(models.Model):
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
 
-    homelike_latitude = models.FloatField()
-    homelike_longitude = models.FloatField()
-    workingplacelike_latitude = models.FloatField()
-    workingplacelike_longitude = models.FloatField()
-
     percent = models.FloatField(default=0.0)
     EmotionType = models.TextChoices('emotion', 'positive normal negative')
     emotion = models.CharField(max_length=20, choices=EmotionType.choices, null=True, default='normal')
@@ -54,7 +49,7 @@ class IntervalMove(models.Model):
         db_table = 'intervalmove'
 
     def __str__(self):
-        return f'{self.daily_path} -> (intervalmove_id: {self.id}, category: {self.category})'
+        return f'{self.daily_path} -> (intervalmove_id: {self.id}, transport: {self.transport})'
 
 
 # class TimeRange(models.Model):

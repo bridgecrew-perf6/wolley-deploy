@@ -21,13 +21,14 @@ from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
 
-def make_date_sequence(time_sequence: List[Dict]) -> (List[List], List[str]):
+def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> (List[List], List[str]):
     date_sequence = []
     date_list = []
     flag = 0
+
     for idx in range(len(time_sequence) - 1):
         if time_sequence[idx]['time'][:10] != time_sequence[idx + 1]['time'][:10]:
-            if flag != 0:
+            if DailyPath.objects.filter(user=user, date=time_sequence[idx]['time'][:10]).exists():
                 data = [{
                     "time": time_sequence[flag]['time'][:10] + " 00:00:00",
                     "coordinates": {
@@ -52,23 +53,38 @@ def make_date_sequence(time_sequence: List[Dict]) -> (List[List], List[str]):
             flag = idx + 1
 
     if flag != len(time_sequence):
-        data = [{
-            "time": time_sequence[flag]['time'][:10] + " 00:00:00",
-            "coordinates": {
-                "longitude": time_sequence[flag]['coordinates']['longitude'],
-                "latitude": time_sequence[flag]['coordinates']['latitude']
-            }
-        }]
-        data.extend(time_sequence[flag:idx + 1])
-        data.append(
-            {
-                "time": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+        if not DailyPath.objects.filter(user=user, date=time_sequence[flag]['time'][:10]).exists():
+            data = [{
+                "time": time_sequence[flag]['time'][:10] + " 00:00:00",
                 "coordinates": {
-                    "longitude": time_sequence[idx]['coordinates']['longitude'],
-                    "latitude": time_sequence[idx]['coordinates']['latitude']
+                    "longitude": time_sequence[flag]['coordinates']['longitude'],
+                    "latitude": time_sequence[flag]['coordinates']['latitude']
                 }
-            }
-        )
+            }]
+        else:
+            data = []
+        data.extend(time_sequence[flag:])
+        now = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        if time_sequence[-1]['time'][:10] == now[:10]:
+            data.append(
+                {
+                    "time": now,
+                    "coordinates": {
+                        "longitude": time_sequence[-1]['coordinates']['longitude'],
+                        "latitude": time_sequence[-1]['coordinates']['latitude']
+                    }
+                }
+            )
+        else:
+            data.append(
+                {
+                    "time": time_sequence[-1]['time'][:10] + " 23:59:59",
+                    "coordinates": {
+                        "longitude": time_sequence[-1]['coordinates']['longitude'],
+                        "latitude": time_sequence[-1]['coordinates']['latitude']
+                    }
+                }
+            )
         date_sequence.append(data)
         date_list.append(time_sequence[flag]['time'][:10])
     return date_sequence, date_list
@@ -154,7 +170,7 @@ class PathDailyRequestView(APIView):
 
         # time stamp 분리
         time_sequence = request.data['timeSequence']
-        date_sequence, date_list = make_date_sequence(time_sequence)
+        date_sequence, date_list = make_date_sequence(time_sequence, app_user)
 
         for i in range(len(date_list)):
             daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_list[i])

@@ -2,8 +2,8 @@ import requests
 import json
 from math import radians, cos, sin, asin, sqrt
 
-from myapi.settings.local import *
-# from myapi.settings.deploy import *
+# from myapi.settings.local import *
+from myapi.settings.deploy import *
 
 
 def coordinate2address(latitude, longitude):

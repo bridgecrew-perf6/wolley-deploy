@@ -20,7 +20,7 @@ class DailyPath(models.Model):
 
 
 class GPSLog(models.Model):
-    id = models.BigAutoField(primary_key=True, db_column="GPSlog_id")
+    id = models.BigAutoField(primary_key=True, db_column="GPSLog_id")
     daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='gpslogs')
 
     latitude = models.FloatField()

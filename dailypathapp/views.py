@@ -171,10 +171,10 @@ class PathDailyRequestView(APIView):
         # time stamp 분리
         time_sequence = request.data['timeSequence']
         date_sequence, date_list = make_date_sequence(time_sequence, app_user)
-
         for i in range(len(date_list)):
             daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_list[i])
 
+            # GPS log 저장
             for date in date_sequence[i]:
                 GPSLog.objects.create(
                     daily_path=daily_path,
@@ -186,13 +186,67 @@ class PathDailyRequestView(APIView):
             gps_logs = make_gps_logs(date_sequence[i])
             points = generatePoints(gps_logs)
             stay_point_centers, stay_points = stayPointExtraction(points)
+
+            point = stay_point_centers[0]
+            interval_stay_obj = IntervalStay.objects.filter(daily_path=daily_path).order_by('start_time').last()
+            interval_move_obj = IntervalMove.objects.filter(daily_path=daily_path).order_by('start_time').last()
+
+            ### interval_stay_obj 가 없거나, interval_move_obj가 없는 경우
+            if not interval_stay_obj or not interval_move_obj:
+                print(f'interval stay : {not interval_stay_obj}')
+                print(f'interval move : {not interval_move_obj}')
+
+            # 둘다 X
             if created:
                 make_interval(app_user, daily_path, stay_point_centers)
+            # stay X move O
+            elif not interval_stay_obj and interval_move_obj:
+                start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
+                interval_move_obj.end_time = start_time
+                interval_move_obj.percent = make_percent(
+                    interval_move_obj.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    interval_move_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                )
+                interval_move_obj.save()
+                make_interval(app_user, daily_path, stay_point_centers)
+            # stay O move X
+            elif not interval_move_obj and interval_stay_obj:
+                d = get_distance(
+                    interval_stay_obj.latitude,
+                    interval_stay_obj.longitude,
+                    point.latitude,
+                    point.longitude
+                )
+                if d < 200:
+                    end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.leaveTime))
+                    interval_stay_obj.end_time = end_time
+                    interval_stay_obj.save()
+                    if len(stay_point_centers) >= 2:
+                        start_time = interval_stay_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stay_point_centers[1].arriveTime))
+                        percent = make_percent(start_time, end_time)
+                        IntervalMove.objects.create(
+                            daily_path=daily_path,
+                            start_time=start_time,
+                            end_time=end_time,
+                            transport="?",
+                            percent=percent
+                        )
+                        make_interval(app_user, daily_path, stay_point_centers[1:])
+                else:
+                    start_time = interval_stay_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                    end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
+                    percent = make_percent(start_time, end_time)
+                    IntervalMove.objects.create(
+                        daily_path=daily_path,
+                        start_time=start_time,
+                        end_time=end_time,
+                        transport="?",
+                        percent=percent
+                    )
+                    make_interval(app_user, daily_path, stay_point_centers)
+            # 둘다 O
             else:
-                point = stay_point_centers[0]
-                interval_stay_obj = IntervalStay.objects.filter(daily_path=daily_path).order_by('start_time').last()
-                interval_move_obj = IntervalMove.objects.filter(daily_path=daily_path).order_by('start_time').last()
-
                 if interval_move_obj.start_time > interval_stay_obj.start_time:
                     start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(point.arriveTime))
                     interval_move_obj.end_time = start_time
@@ -202,7 +256,6 @@ class PathDailyRequestView(APIView):
                     )
                     interval_move_obj.save()
                     make_interval(app_user, daily_path, stay_point_centers)
-
                 else:
                     d = get_distance(
                         interval_stay_obj.latitude,
@@ -216,7 +269,8 @@ class PathDailyRequestView(APIView):
                         interval_stay_obj.save()
                         if len(stay_point_centers) >= 2:
                             start_time = interval_stay_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
-                            end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stay_point_centers[1].arriveTime))
+                            end_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                                                     time.localtime(stay_point_centers[1].arriveTime))
                             percent = make_percent(start_time, end_time)
                             IntervalMove.objects.create(
                                 daily_path=daily_path,

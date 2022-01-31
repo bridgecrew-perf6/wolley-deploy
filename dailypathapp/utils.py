@@ -2,6 +2,7 @@ import requests
 import json
 from math import radians, cos, sin, asin, sqrt
 
+from accountapp.models import Estimate, AppUser
 from myapi.settings.local import *
 # from myapi.settings.deploy import *
 
@@ -27,16 +28,17 @@ def get_distance(y1, x1, y2, x2):
     return m
 
 
-def get_visited_place(latitude, longitude, appuser_obj, DIST_THR=200):
-    dist_from_homelike = get_distance(latitude, longitude, appuser_obj.homelike_latitude,
-                                      appuser_obj.homelike_longitude)
-    if dist_from_homelike < DIST_THR:
-        return "집"
-
-    dist_from_workingplacelike = get_distance(latitude, longitude, appuser_obj.workingplacelike_latitude,
-                                              appuser_obj.workingplacelike_longitude)
-    if dist_from_workingplacelike < DIST_THR:
-        return "회사"
+def get_visited_place(latitude: float, longitude: float, app_user_obj: AppUser, DIST_THR: int = 200) -> str:
+    estimate_objs = Estimate.objects.filter(user=app_user_obj)
+    for estimate_obj in estimate_objs:
+        dist = get_distance(
+            latitude,
+            longitude,
+            estimate_obj.latitude,
+            estimate_obj.longitude
+        )
+        if dist < DIST_THR:
+            return estimate_obj.category
     return "?"
 
 

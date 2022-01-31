@@ -6,6 +6,7 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from accountapp.models import AppUser
 from dailypathapp.utils import coordinate2address
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, make_interval_stay_to_data
@@ -35,6 +36,14 @@ class IntervalRequestView(APIView):
         except IntervalStay.DoesNotExist:
             content = make_response_content("Interval 기록 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        print(interval_obj.daily_path.user)
+        app_user_obj = AppUser.objects.filter(user=interval_obj.daily_path.user)
+        print(app_user_obj)
+        # if request.data["category"] == "집":
+        #     pass
+        # elif request.data["category"] in ["회사","학교"]:
+        #     pass
 
         interval_obj.category = request.data["category"]
         interval_obj.location = request.data["location"]

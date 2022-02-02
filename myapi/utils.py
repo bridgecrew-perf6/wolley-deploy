@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, Union, List
 
 from django.db.models import QuerySet
@@ -83,6 +84,46 @@ def make_interval_stay_to_data(interval_obj: IntervalStay) -> Dict:
             "latitude": interval_obj.latitude,
             "longitude": interval_obj.longitude
         },
+        "time": {
+            "start": interval_obj.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            "end": interval_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        },
         "percent": interval_obj.percent
     }
     return data
+
+
+def update_before_interval_end_time(daily_path: DailyPath, start_time: datetime, start: str) -> None:
+    try:
+        interval_stay_obj = IntervalStay.objects.get(daily_path=daily_path, end_time=start_time)
+        interval_stay_obj.end_time = start
+        interval_stay_obj.save()
+        return
+    except IntervalStay.DoesNotExist:
+        pass
+
+    try:
+        interval_move_obj = IntervalMove.objects.get(daily_path=daily_path, end_time=start_time)
+        interval_move_obj.end_time = start
+        interval_move_obj.save()
+        return
+    except IntervalMove.DoesNotExist:
+        pass
+
+
+def update_after_interval_start_time(daily_path: DailyPath, end_time: datetime, end: str) -> None:
+    try:
+        interval_stay_obj = IntervalStay.objects.get(daily_path=daily_path, start_time=end_time)
+        interval_stay_obj.start_time = end
+        interval_stay_obj.save()
+        return
+    except IntervalStay.DoesNotExist:
+        pass
+
+    try:
+        interval_move_obj = IntervalMove.objects.get(daily_path=daily_path, end_time=end_time)
+        interval_move_obj.start_time = end
+        interval_move_obj.save()
+        return
+    except IntervalMove.DoesNotExist:
+        pass

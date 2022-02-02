@@ -9,7 +9,8 @@ from django.utils.decorators import method_decorator
 from accountapp.models import AppUser, Estimate
 from dailypathapp.utils import coordinate2address
 from intervalapp.models import IntervalStay
-from myapi.utils import make_response_content, make_interval_stay_to_data
+from myapi.utils import make_response_content, make_interval_stay_to_data, update_before_interval_end_time, \
+    update_after_interval_start_time
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -46,8 +47,8 @@ class IntervalRequestView(APIView):
             latitude=request.data["coordinates"]["latitude"],
             longitude=request.data["coordinates"]["longitude"]
         )
-
         print("estimate save")
+
         interval_obj.category = request.data["category"]
         interval_obj.location = request.data["location"]
         interval_obj.latitude = request.data["coordinates"]["latitude"]
@@ -56,6 +57,13 @@ class IntervalRequestView(APIView):
             request.data["coordinates"]["latitude"],
             request.data["coordinates"]["longitude"]
         )
+
+        update_before_interval_end_time(interval_obj.daily_path, interval_obj.start_time, request.data['time']['start'])
+        interval_obj.start_time = request.data['time']['start']
+
+        update_after_interval_start_time(interval_obj.daily_path, interval_obj.end_time, request.data['time']['end'])
+        interval_obj.end_time = request.data['time']['end']
+
         interval_obj.save()
 
         data = make_interval_stay_to_data(interval_obj)

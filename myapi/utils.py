@@ -94,36 +94,8 @@ def make_interval_stay_to_data(interval_obj: IntervalStay) -> Dict:
 
 
 def update_before_interval_end_time(daily_path: DailyPath, start_time: datetime, start: str) -> None:
-    try:
-        interval_stay_obj = IntervalStay.objects.get(daily_path=daily_path, end_time=start_time)
-        interval_stay_obj.end_time = start
-        interval_stay_obj.save()
-        return
-    except IntervalStay.DoesNotExist:
-        pass
-
-    try:
-        interval_move_obj = IntervalMove.objects.get(daily_path=daily_path, end_time=start_time)
-        interval_move_obj.end_time = start
-        interval_move_obj.save()
-        return
-    except IntervalMove.DoesNotExist:
-        pass
+    pass
 
 
 def update_after_interval_start_time(daily_path: DailyPath, end_time: datetime, end: str) -> None:
-    try:
-        interval_stay_obj = IntervalStay.objects.get(daily_path=daily_path, start_time=end_time)
-        interval_stay_obj.start_time = end
-        interval_stay_obj.save()
-        return
-    except IntervalStay.DoesNotExist:
-        pass
-
-    try:
-        interval_move_obj = IntervalMove.objects.get(daily_path=daily_path, end_time=end_time)
-        interval_move_obj.start_time = end
-        interval_move_obj.save()
-        return
-    except IntervalMove.DoesNotExist:
-        pass
+    pass

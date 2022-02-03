@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, Union, List
 
 from django.db.models import QuerySet
@@ -83,6 +84,18 @@ def make_interval_stay_to_data(interval_obj: IntervalStay) -> Dict:
             "latitude": interval_obj.latitude,
             "longitude": interval_obj.longitude
         },
+        "time": {
+            "start": interval_obj.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            "end": interval_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        },
         "percent": interval_obj.percent
     }
     return data
+
+
+def update_before_interval_end_time(daily_path: DailyPath, start_time: datetime, start: str) -> None:
+    pass
+
+
+def update_after_interval_start_time(daily_path: DailyPath, end_time: datetime, end: str) -> None:
+    pass

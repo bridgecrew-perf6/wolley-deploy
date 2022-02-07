@@ -57,13 +57,6 @@ class IntervalRequestView(APIView):
             request.data["coordinates"]["latitude"],
             request.data["coordinates"]["longitude"]
         )
-
-        update_before_interval_end_time(interval_obj.daily_path, interval_obj.start_time, request.data['time']['start'])
-        interval_obj.start_time = request.data['time']['start']
-
-        update_after_interval_start_time(interval_obj.daily_path, interval_obj.end_time, request.data['time']['end'])
-        interval_obj.end_time = request.data['time']['end']
-
         interval_obj.save()
 
         data = make_interval_stay_to_data(interval_obj)

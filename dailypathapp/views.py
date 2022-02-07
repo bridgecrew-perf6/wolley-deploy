@@ -46,6 +46,8 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
 
     end_flag = len(date_sequence) - 1
     for idx, date_key in enumerate(date_sequence.keys()):
+        if not date_sequence[date_key]:
+            continue
         if not DailyPath.objects.filter(user=user, date=date_key).exists():
             start_data = {
                 "time": date_key + " 00:00:00",
@@ -147,6 +149,7 @@ def check_last_interval(interval_stay_obj: IntervalStay, interval_move_obj: Inte
 def make_move_point(points: Point, stay_point_centers: List[Point]) -> List:
     move_range = []
     flag = "stay"
+
     if not stay_point_centers:
         move_range.append((points[0].dateTime, points[-1].dateTime))
         flag = "move"
@@ -186,6 +189,9 @@ class PathDailyRequestView(APIView):
         date_sequence = make_date_sequence(time_sequence, app_user)
         for date_key, date_value in date_sequence.items():
             daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
+
+            if not date_value:
+                continue
 
             # GPS log 저장
             for date in date_value:

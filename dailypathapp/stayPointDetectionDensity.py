@@ -99,11 +99,16 @@ def stayPointExtraction(points, distThres=200, timeThres=30 * 60):
                         break
                 j -= 1
                 latitude, longitude = computMeanCoord(points[i: j + 1])
-                arriveTime = time.mktime(time.strptime(points[i].dateTime, time_format))
-                leaveTime = time.mktime(time.strptime(points[j].dateTime, time_format))
-                dateTime = time.strftime(time_format, time.localtime(arriveTime)), time.strftime(time_format,
-                                                                                                 time.localtime(
-                                                                                                     leaveTime))
+                # arriveTime = time.mktime(time.strptime(points[i].dateTime, time_format))
+                # leaveTime = time.mktime(time.strptime(points[j].dateTime, time_format))
+                # dateTime = time.strftime(time_format, time.localtime(arriveTime)), time.strftime(time_format,
+                #                                                                                  time.localtime(
+                #                                                                                      leaveTime))
+                # 수정
+                arriveTime = points[i].dateTime
+                leaveTime = points[j].dateTime
+                dateTime = (arriveTime, leaveTime)
+
                 stayPointCenterList.append(Point(latitude, longitude, dateTime, arriveTime, leaveTime))
                 stayPointList.extend(points[i: j + 1])
         i = j + 1

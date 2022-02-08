@@ -332,6 +332,7 @@ class MapRequestView(APIView):
             info_data = [
                 {
                     "id": interval_obj.id,
+                    "category": interval_obj.category,
                     "address": interval_obj.address,
                     "coordinates": {
                         "latitude": interval_obj.latitude,

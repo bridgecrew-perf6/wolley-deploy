@@ -32,6 +32,17 @@ def make_date_range(start: str, end: str) -> List:
     return date_range
 
 
+def make_date_data(date: str, longitude: float, latitude: float) -> Dict:
+    date_data = {
+        "time": date,
+        "coordinates": {
+            "longitude": longitude,
+            "latitude": latitude
+        }
+    }
+    return date_data
+
+
 def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
     if not time_sequence:
         return {}
@@ -46,26 +57,29 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
 
     end_flag = len(date_sequence) - 1
     for idx, date_key in enumerate(date_sequence.keys()):
+
         if not date_sequence[date_key]:
             continue
-        if not DailyPath.objects.filter(user=user, date=date_key).exists():
-            start_data = {
-                "time": date_key + " 00:00:00",
-                "coordinates": {
-                    "longitude": date_sequence[date_key][0]['coordinates']['longitude'],
-                    "latitude": date_sequence[date_key][0]['coordinates']['latitude']
-                }
-            }
+
+        try:
+            daily_path = DailyPath.objects.get(user=user, date=date_key)
+            gps_log = GPSLog.objects.filter(daily_path=daily_path).order_by('timestamp').last()
+            start_data = make_date_data(gps_log.timestamp.strftime("%Y-%m-%d %H:%M:%S"), gps_log.longitude, gps_log.latitude)
+            date_sequence[date_key].insert(0, start_data)
+        except DailyPath.DoesNotExist or GPSLog.DoesNotExist:
+            start_data = make_date_data(
+                date_key + " 00:00:00",
+                date_sequence[date_key][0]['coordinates']['longitude'],
+                date_sequence[date_key][0]['coordinates']['latitude']
+            )
             date_sequence[date_key].insert(0, start_data)
 
         if idx != end_flag:
-            end_data = {
-                "time": date_key + " 23:59:59",
-                "coordinates": {
-                    "longitude": date_sequence[date_key][-1]['coordinates']['longitude'],
-                    "latitude": date_sequence[date_key][-1]['coordinates']['latitude']
-                }
-            }
+            end_data = make_date_data(
+                date_key + " 23:59:59",
+                date_sequence[date_key][-1]['coordinates']['longitude'],
+                date_sequence[date_key][-1]['coordinates']['latitude']
+            )
             date_sequence[date_key].append(end_data)
     return date_sequence
 
@@ -95,8 +109,6 @@ def make_percent(start: str, end: str) -> float:
 
 
 def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
-    # input으로 들어오는게 머문 장소 좌표로 되어있으니
-    # 먼저 장소 정리하고, 사이 시간은 다 이동으로 변경
     print("Interval Stay")
     for point in stay_point_centers:
         start_time = point.arriveTime
@@ -119,7 +131,6 @@ def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_cent
 
 
 def make_move_interval(app_user: AppUser, daily_path: DailyPath, move_points: List[Tuple]) -> None:
-    # Interval Move
     print("Interval Move")
     for start_time, end_time in move_points:
         percent = make_percent(start_time, end_time)
@@ -146,6 +157,7 @@ def check_last_interval(interval_stay_obj: IntervalStay, interval_move_obj: Inte
             return "move"
 
 
+# 나중에 함수 분리하기
 def make_move_point(points: Point, stay_point_centers: List[Point]) -> List:
     move_range = []
     flag = "stay"

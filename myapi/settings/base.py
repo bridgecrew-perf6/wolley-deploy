@@ -50,6 +50,9 @@ INSTALLED_APPS = [
 
     # CORS error 처리
     'corsheaders',
+
+    # crontab (주기적인 함수 실행)
+    'django_crontab',
 ]
 
 
@@ -165,7 +168,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # firebase 관련
-
 cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
 firebase_admin.initialize_app(cred)
+
+# crontab 관련
+CRONJOBS = [
+    # ('*/1 * * * *', 'dailypathapp.cron.crontab_job'),
+]

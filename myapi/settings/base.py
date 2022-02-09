@@ -48,9 +48,6 @@ INSTALLED_APPS = [
 
     # CORS error 처리
     'corsheaders',
-
-    # crontab (주기적인 함수 실행)
-    'django_crontab',
 ]
 
 

@@ -69,20 +69,14 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
                 gps_log.latitude
             )
             date_sequence[date_key].insert(0, start_data)
-        except DailyPath.DoesNotExist:
+        except:
             start_data = make_date_data(
                 date_key + " 00:00:00",
                 date_sequence[date_key][0]['coordinates']['longitude'],
                 date_sequence[date_key][0]['coordinates']['latitude']
             )
             date_sequence[date_key].insert(0, start_data)
-        except  GPSLog.DoesNotExist:
-            start_data = make_date_data(
-                date_key + " 00:00:00",
-                date_sequence[date_key][0]['coordinates']['longitude'],
-                date_sequence[date_key][0]['coordinates']['latitude']
-            )
-            date_sequence[date_key].insert(0, start_data)
+
 
         if idx != end_flag:
             end_data = make_date_data(

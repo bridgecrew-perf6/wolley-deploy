@@ -52,10 +52,10 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
     date_range = make_date_range(start_date, end_date)
     date_sequence = {d: [] for d in date_range}
 
-    # for time_seq in time_sequence:
-    #     date_sequence[time_seq['time'][:10]].append(time_seq)
-    #
-    # end_flag = len(date_sequence) - 1
+    for time_seq in time_sequence:
+        date_sequence[time_seq['time'][:10]].append(time_seq)
+
+    end_flag = len(date_sequence) - 1
     # for idx, date_key in enumerate(date_sequence.keys()):
     #     if not date_sequence[date_key]:
     #         continue
@@ -196,9 +196,9 @@ class PathDailyRequestView(APIView):
             user.save()
 
         app_user, _ = AppUser.objects.get_or_create(user=user)
-
         request_time_sequence = request.data['timeSequence']
-        # date_sequence = make_date_sequence(request_time_sequence, app_user)
+        date_sequence = make_date_sequence(request_time_sequence, app_user)
+        print(date_sequence)
         # for date_key, date_value in date_sequence.items():
         #     daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
         #

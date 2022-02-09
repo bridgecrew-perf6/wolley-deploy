@@ -20,9 +20,6 @@ from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
-import logging
-logger = logging.getLogger('my')
-
 
 def make_date_range(start: str, end: str) -> List:
     date_range = []
@@ -47,23 +44,21 @@ def make_date_data(date: str, longitude: float, latitude: float) -> Dict:
 
 
 def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
-    logger.info("make_date_sequence 시작")
     if not time_sequence:
         return {}
-    logger.info("make_date_sequence Null 체크")
+
     start_date = time_sequence[0]['time'][:10]
     end_date = time_sequence[-1]['time'][:10]
     date_range = make_date_range(start_date, end_date)
     date_sequence = {d: [] for d in date_range}
-    logger.info("make_date_sequence date range 생성")
-    for time_seq in time_sequence:
-        date_sequence[time_seq['time'][:10]].append(time_seq)
 
-    end_flag = len(date_sequence) - 1
-    for idx, date_key in enumerate(date_sequence.keys()):
-
-        if not date_sequence[date_key]:
-            continue
+    # for time_seq in time_sequence:
+    #     date_sequence[time_seq['time'][:10]].append(time_seq)
+    #
+    # end_flag = len(date_sequence) - 1
+    # for idx, date_key in enumerate(date_sequence.keys()):
+    #     if not date_sequence[date_key]:
+    #         continue
 
         # try:
         #     daily_path = DailyPath.objects.get(user=user, date=date_key)

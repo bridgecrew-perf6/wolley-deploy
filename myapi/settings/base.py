@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import environ, os
 from pathlib import Path
-import firebase_admin
-from firebase_admin import credentials
 
 
 def read_secret(secret_name):
@@ -165,14 +163,3 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# firebase 관련
-cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
-cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
-
-# crontab 관련
-CRONJOBS = [
-    # ('*/1 * * * *', 'dailypathapp.cron.crontab_job'),
-]

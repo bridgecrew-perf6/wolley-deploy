@@ -195,8 +195,7 @@ class PathDailyRequestView(APIView):
         app_user, _ = AppUser.objects.get_or_create(user=user)
 
         time_sequence = request.data['timeSequence']
-        print(time_sequence)
-        # date_sequence = make_date_sequence(time_sequence, app_user)
+        date_sequence = make_date_sequence(time_sequence, app_user)
         # for date_key, date_value in date_sequence.items():
         #     daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
         #

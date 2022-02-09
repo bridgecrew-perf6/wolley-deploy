@@ -1,2 +1,1 @@
 test edit20
-test nginx 10

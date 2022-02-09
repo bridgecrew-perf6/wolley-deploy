@@ -76,14 +76,14 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
                 date_sequence[date_key][0]['coordinates']['latitude']
             )
             date_sequence[date_key].insert(0, start_data)
-        #
-        # if idx != end_flag:
-        #     end_data = make_date_data(
-        #         date_key + " 23:59:59",
-        #         date_sequence[date_key][-1]['coordinates']['longitude'],
-        #         date_sequence[date_key][-1]['coordinates']['latitude']
-        #     )
-        #     date_sequence[date_key].append(end_data)
+
+        if idx != end_flag:
+            end_data = make_date_data(
+                date_key + " 23:59:59",
+                date_sequence[date_key][-1]['coordinates']['longitude'],
+                date_sequence[date_key][-1]['coordinates']['latitude']
+            )
+            date_sequence[date_key].append(end_data)
     return date_sequence
 
 

@@ -186,12 +186,12 @@ class PathDailyRequestView(APIView):
 
     def post(self, request):
 
-        # request_user = request.data['user']
-        # user, created = User.objects.get_or_create(username=request_user)
-        # if created:
-        #     user.set_password('123')
-        #     user.save()
-        #
+        request_user = request.data['user']
+        user, created = User.objects.get_or_create(username=request_user)
+        if created:
+            user.set_password('123')
+            user.save()
+
         # app_user, _ = AppUser.objects.get_or_create(user=user)
         #
         # time_sequence = request.data['timeSequence']

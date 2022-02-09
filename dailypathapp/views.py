@@ -192,8 +192,8 @@ class PathDailyRequestView(APIView):
             user.set_password('123')
             user.save()
 
-        # app_user, _ = AppUser.objects.get_or_create(user=user)
-        #
+        app_user, _ = AppUser.objects.get_or_create(user=user)
+
         # time_sequence = request.data['timeSequence']
         # date_sequence = make_date_sequence(time_sequence, app_user)
         # for date_key, date_value in date_sequence.items():

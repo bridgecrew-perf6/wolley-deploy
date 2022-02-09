@@ -10,8 +10,9 @@ def schedule_func():
 
     print(datetime.today())
     tokens = [pushFCMNotification.token_ella, pushFCMNotification.token_alpha]
-    for tok in tokens:
-        pushFCMNotification.send_to_firebase_cloud_messaging(tok)
+    # for tok in tokens:
+    #     pushFCMNotification.send_to_firebase_cloud_messaging(tok)
+    pushFCMNotification.send_to_firebase_cloud_group_messaging(tokens)
 
 
 if __name__ == "__main__":

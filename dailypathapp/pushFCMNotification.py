@@ -19,9 +19,6 @@ def init_app():
 
 
 def send_to_firebase_cloud_messaging(registration_token):
-    # today
-    timestamp = f"{datetime.datetime.today()}"
-
     # See documentation on defining a message payload.
     apns = messaging.APNSConfig(
         payload=messaging.APNSPayload(
@@ -43,10 +40,32 @@ def send_to_firebase_cloud_messaging(registration_token):
     print('Successfully sent message:', response)
 
 
+def send_to_firebase_cloud_group_messaging(registration_tokens):
+    # See documentation on defining a message payload.
+    apns = messaging.APNSConfig(
+        payload=messaging.APNSPayload(
+            aps=messaging.Aps(content_available=True)  # individual needs in the background notification part
+        )
+    )
+    message = messaging.MulticastMessage(
+        # silent noti를 원한다면, 아래 notification 부분을 주석처리 하면 된다.
+        notification=messaging.Notification(
+            title='(test) title 입니다.',
+            body='(test) u r so pretty girl~',
+        ),
+        apns=apns,
+        tokens=registration_tokens,
+    )
+    response = messaging.send_multicast(message)
+    print(f"{response.success_count} messages were sent successfully.")
+
+
 if __name__ == "__main__":
     init_app()
 
     print(datetime.datetime.today())
     tokens = [token_alpha, token_ella]
-    for tok in tokens:
-        send_to_firebase_cloud_messaging(tok)
+
+    # for tok in tokens:
+    #     send_to_firebase_cloud_messaging(tok)
+    send_to_firebase_cloud_group_messaging(tokens)

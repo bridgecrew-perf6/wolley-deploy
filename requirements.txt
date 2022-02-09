@@ -1,4 +1,6 @@
+APScheduler==3.8.1
 asgiref==3.4.1
+backports.zoneinfo==0.2.1
 CacheControl==0.12.10
 cachetools==5.0.0
 certifi==2021.10.8
@@ -7,7 +9,6 @@ defusedxml==0.7.1
 diff-match-patch==20200713
 Django==3.0.14
 django-cors-headers==3.10.1
-django-crontab==0.7.1
 django-environ==0.8.1
 django-filter==21.1
 django-import-export==2.7.1
@@ -41,12 +42,15 @@ pyasn1-modules==0.2.8
 PyMySQL==1.0.2
 pyparsing==3.0.7
 pytz==2021.3
+pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
 requests==2.27.1
 rsa==4.8
 six==1.16.0
 sqlparse==0.4.2
 tablib==3.1.0
+tzdata==2021.5
+tzlocal==4.1
 uritemplate==4.1.1
 urllib3==1.26.8
 xlrd==2.0.1

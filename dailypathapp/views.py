@@ -179,26 +179,23 @@ def make_move_point(points: Point, stay_point_centers: List[Point]) -> List:
 
     return move_range, flag
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class PathDailyRequestView(APIView):
     permission_classes = [AllowAny]
 
-    # for real 통신
     def post(self, request):
-        # 전체적으로 오류 메세지 전달하는 양식 추가하기
 
-        # user 확인
-        request_user = request.data['user']
-        user, created = User.objects.get_or_create(username=request_user)
-        if created:
-            user.set_password('123')
-            user.save()
-
-        app_user, _ = AppUser.objects.get_or_create(user=user)
-        print('test')
-        # time stamp 분리
-        time_sequence = request.data['timeSequence']
-        date_sequence = make_date_sequence(time_sequence, app_user)
+        # request_user = request.data['user']
+        # user, created = User.objects.get_or_create(username=request_user)
+        # if created:
+        #     user.set_password('123')
+        #     user.save()
+        #
+        # app_user, _ = AppUser.objects.get_or_create(user=user)
+        #
+        # time_sequence = request.data['timeSequence']
+        # date_sequence = make_date_sequence(time_sequence, app_user)
         # for date_key, date_value in date_sequence.items():
         #     daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
         #

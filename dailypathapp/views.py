@@ -63,9 +63,13 @@ def make_date_sequence(time_sequence: List[Dict], user: AppUser) -> Dict:
 
         try:
             daily_path = DailyPath.objects.get(user=user, date=date_key)
-            gps_log = GPSLog.objects.filter(daily_path=daily_path).order_by('timestamp').last()
-            start_data = make_date_data(gps_log.timestamp.strftime("%Y-%m-%d %H:%M:%S"), gps_log.longitude, gps_log.latitude)
-            date_sequence[date_key].insert(0, start_data)
+            # gps_log = GPSLog.objects.filter(daily_path=daily_path).order_by('timestamp').last()
+            # start_data = make_date_data(
+            #     gps_log.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            #     gps_log.longitude,
+            #     gps_log.latitude
+            # )
+            # date_sequence[date_key].insert(0, start_data)
         except DailyPath.DoesNotExist or GPSLog.DoesNotExist:
             start_data = make_date_data(
                 date_key + " 00:00:00",
@@ -196,7 +200,7 @@ class PathDailyRequestView(APIView):
 
         request_time_sequence = request.data['timeSequence']
         print(request_time_sequence)
-        # date_sequence = make_date_sequence(request_time_sequence, app_user)
+        date_sequence = make_date_sequence(request_time_sequence, app_user)
         # for date_key, date_value in date_sequence.items():
         #     daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
         #

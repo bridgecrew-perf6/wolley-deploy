@@ -419,6 +419,6 @@ class MonthlyRequestView(APIView):
         for daily_path_obj in daily_path_objs:
             print(daily_path_obj)
 
-
+            ### 주단위 기준 정하기
         content = make_response_content("test", {})
         return Response(content, status=status.HTTP_200_OK)

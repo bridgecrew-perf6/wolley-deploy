@@ -29,16 +29,15 @@ class DiaryRequestView(APIView):
 
         content, status_code, daily_path_obj = check_daily_path_obj(request)
         if status_code == status.HTTP_200_OK:
-            diary_obj, created = Diary.objects.get_or_create(daily_path=daily_path_obj.id)
+            diary_obj, created = Diary.objects.get_or_create(daily_path=daily_path_obj)
             if created:
-                intervals = IntervalStay.objects.filter(daily_path=daily_path_obj.id).order_by('start_time')
+                intervals = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
+                generated_diary = [
+                    f'{interval.start_time} - {interval.end_time} {interval.category} {interval.location}'
+                    for interval in intervals
+                ]
 
-                request_data = json.dumps({"data": list(intervals.values())}, cls=DjangoJSONEncoder)
-                # res = requests.post("http://34.97.149.180/diary/", data=request_data)
-                res = requests.post("http://127.0.0.1:8080/diary/", data=request_data)
-                generated_diary_content = res.json()['content']
-
-                diary_obj.content = generated_diary_content
+                diary_obj.content = '\n'.join(generated_diary)
                 diary_obj.save()
 
             content['data'] = {

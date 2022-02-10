@@ -21,6 +21,7 @@ from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
 WEEK = 7
+WEEK_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 def make_date_range(start: str, end: str) -> List:
     date_range = []
@@ -338,15 +339,32 @@ class WeeklyRequestView(APIView):
         request_user = request.headers['user']
         request_date = request.headers['date']
 
-        print(request_user, request_date)
-        today = datetime.strptime(request_date, "%Y-%m-%d")
-        year, week, _ = today.isocalendar()
-        for i in range(WEEK):
-            check_date = datetime.fromisocalendar(year, week-1, i+1).strftime("%Y-%m-%d")
-            content, status_code, interval_stay_objs, interval_move_objs = check_interval_objs(request_user,
-                                                                                               check_date)
+        today_year, today_week, _ = datetime.today().isocalendar()
+        iso_year, iso_week, _ = datetime.strptime(request_date, "%Y-%m-%d").isocalendar()
 
-        content = make_response_content("테스트중", {})
+        if (today_year == iso_year) and (today_week == iso_week):
+            print("이번주")
+            content = make_response_content("week data 부족", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        for i in range(WEEK):
+            check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
+            try:
+                user = AppUser.objects.get(user__username=request_user)
+                daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_objs)
+                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_objs)
+            except AppUser.DoesNotExist:
+                content = make_response_content("user 없음", {})
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            except DailyPath.DoesNotExist:
+                content = make_response_content("Monthly 기록 없음", {})
+                Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            stay_data = []
+            move_data = []
+
+        content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)
 
 

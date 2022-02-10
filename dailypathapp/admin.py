@@ -5,7 +5,7 @@ from .models import GPSLog
 
 
 class GPSLogsAdmin(admin.ModelAdmin):
-    search_fields = ['daily_path__date']
+    search_fields = ['user__user__username', 'daily_path__date']
 
 
 admin.site.register(DailyPath)

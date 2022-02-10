@@ -5,11 +5,11 @@ from .models import IntervalStay
 
 
 class IntervalMoveAdmin(admin.ModelAdmin):
-    search_fields = ['daily_path__date']
+    search_fields = ['daily_path__user__user__username', 'daily_path__date']
 
 
 class IntervalStayAdmin(admin.ModelAdmin):
-    search_fields = ['daily_path__date']
+    search_fields = ['daily_path__user__user__username', 'daily_path__date']
 
 
 admin.site.register(IntervalMove, IntervalMoveAdmin)

@@ -60,6 +60,12 @@ class DiaryRequestView(APIView):
         diary_obj.content = update_content
         diary_obj.save()
 
-        content = make_response_content("성공", {})
+        data = {
+            "id": diary_obj.id,
+            "date": diary_obj.daily_path.date,
+            "content": diary_obj.content
+        }
+
+        content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 

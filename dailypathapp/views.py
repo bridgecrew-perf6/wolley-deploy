@@ -355,6 +355,8 @@ class WeeklyRequestView(APIView):
         }
         for i in range(WEEK):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
+            day_data = list()
+
             try:
                 user = AppUser.objects.get(user__username=request_user)
                 daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
@@ -364,11 +366,9 @@ class WeeklyRequestView(APIView):
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             except DailyPath.DoesNotExist:
+                data[WEEK_NAME[i]] = day_data
                 continue
 
-            print(interval_stay_objs)
-            print(interval_move_objs)
-            day_data = list()
             day_data.extend([
                 {
                     "id": interval_obj.id,

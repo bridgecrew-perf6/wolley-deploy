@@ -190,7 +190,6 @@ class PathDailyRequestView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         request_user = request.data['user']
         user, created = User.objects.get_or_create(username=request_user)
         if created:
@@ -405,34 +404,21 @@ class MonthlyRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        content, status_code, daily_path_objs = check_daily_path_objs(request)
-        if status_code == status.HTTP_200_OK:
-            for daily_path_obj in daily_path_objs:
-                interval_stay_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id)
-                interval_move_objs = IntervalMove.objects.filter(daily_path_id=daily_path_obj.id)
-                info_data = list()
-                info_data.extend([
-                    {
-                        "id": interval_obj.id,
-                        "category": interval_obj.category,
-                        "percent": interval_obj.percent,
-                        "start": interval_obj.start_time
-                    } for interval_obj in interval_stay_objs
-                ])
-                info_data.extend([
-                    {
-                        "id": interval_obj.id,
-                        "category": "이동",
-                        "percent": interval_obj.percent,
-                        "start": interval_obj.start_time
-                    } for interval_obj in interval_move_objs
-                ])
-                info_data = sorted(info_data, key=lambda info: info['start'])
+        request_user = request.headers['user']
+        request_date = request.headers['date']
 
-                daily_path_data = {
-                    "id": daily_path_obj.id,
-                    "date": daily_path_obj.date,
-                    "info": info_data
-                }
-                content['data'].append(daily_path_data)
-        return Response(content, status=status_code)
+        today = datetime.today()
+        request_year, request_month, _ = map(int, request_date.split('-'))
+        if request_year == today.year and request_month == today.month:
+            print("이번달")
+            content = make_response_content("month data 부족", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        user_obj = AppUser.objects.get(user__username=request_user)
+        daily_path_objs = DailyPath.objects.filter(user=user_obj, date__year=request_year, date__month=request_month)
+        for daily_path_obj in daily_path_objs:
+            print(daily_path_obj)
+
+            ### 주단위 기준 정하기
+        content = make_response_content("test", {})
+        return Response(content, status=status.HTTP_200_OK)

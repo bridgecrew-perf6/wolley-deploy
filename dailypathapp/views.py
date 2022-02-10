@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import time
 from typing import List, Dict, Tuple
 
 from django.contrib.auth.models import User
@@ -14,14 +13,16 @@ from django.utils.decorators import method_decorator
 from dailypathapp.stayPointDetectionDensity import generatePoints, stayPointExtraction, Point
 from dailypathapp.utils import coordinate2address, get_visited_place, get_distance
 
+from django.db.models import QuerySet
 from accountapp.models import AppUser
-
 from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
-WEEK = 7
-WEEK_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAY = 7
+MONTH = 12
+DAY_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
 def make_date_range(start: str, end: str) -> List:
     date_range = []
@@ -352,7 +353,7 @@ class WeeklyRequestView(APIView):
                 "sunday": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
             }
         }
-        for i in range(WEEK):
+        for i in range(DAY):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
             day_data = list()
 
@@ -365,7 +366,7 @@ class WeeklyRequestView(APIView):
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             except DailyPath.DoesNotExist:
-                data[WEEK_NAME[i]] = day_data
+                data[DAY_NAME[i]] = day_data
                 continue
 
             day_data.extend([
@@ -393,7 +394,7 @@ class WeeklyRequestView(APIView):
                 } for interval_obj in interval_move_objs
             ])
             day_data = sorted(day_data, key=lambda info: info['time']['start'])
-            data[WEEK_NAME[i]] = day_data
+            data[DAY_NAME[i]] = day_data
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
@@ -421,4 +422,57 @@ class MonthlyRequestView(APIView):
 
             ### 주단위 기준 정하기
         content = make_response_content("test", {})
+        return Response(content, status=status.HTTP_200_OK)
+
+
+def make_stat_data():
+    stat_data = {
+        category: {
+            "time": timedelta(0)
+        } for category in CATEGORY_SORT
+    }
+    return stat_data
+
+@method_decorator(csrf_exempt, name='dispatch')
+class YearlyRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+        today = datetime.today()
+        request_year, _, _ = map(int, request_date.split('-'))
+        if request_year == today.year:
+            print("이번 연도")
+            content = make_response_content("year data 부족", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        data = dict()
+        user_obj = AppUser.objects.get(user__username=request_user)
+        for i in range(1, MONTH+1):
+            stat_data = make_stat_data()
+            total = timedelta(0)
+            daily_path_objs = DailyPath.objects.filter(user=user_obj, date__year=request_year, date__month=i)
+            for daily_path_obj in daily_path_objs:
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj.id)
+                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
+
+                for interval_stay_obj in interval_stay_objs:
+                    stat_data[interval_stay_obj.category]['time'] += interval_stay_obj.end_time - interval_stay_obj.start_time
+                    total += interval_stay_obj.end_time - interval_stay_obj.start_time
+
+                for interval_move_obj in interval_move_objs:
+                    stat_data["이동"]['time'] += interval_move_obj.end_time - interval_move_obj.start_time
+                    total += interval_move_obj.end_time - interval_move_obj.start_time
+
+            for k in stat_data.keys():
+                if total != timedelta(0):
+                    stat_data[k]["percent"] = stat_data[k]['time'] / total
+                else:
+                    stat_data[k]["percent"] = 0.0
+                stat_data[k]['time'] = str(stat_data[k]['time'])
+
+            data[f"{request_year}-{i:02d}"] = stat_data
+        content = make_response_content("test", data)
         return Response(content, status=status.HTTP_200_OK)

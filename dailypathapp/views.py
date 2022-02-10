@@ -347,6 +347,12 @@ class WeeklyRequestView(APIView):
             content = make_response_content("week data 부족", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
+        data = {
+            "week_data": {
+                "monday": datetime.fromisocalendar(iso_year, iso_week, 1).strftime("%Y년 %m월 %d일"),
+                "sunday": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
+            }
+        }
         for i in range(WEEK):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
             try:
@@ -358,13 +364,39 @@ class WeeklyRequestView(APIView):
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             except DailyPath.DoesNotExist:
-                content = make_response_content("Monthly 기록 없음", {})
-                Response(content, status=status.HTTP_400_BAD_REQUEST)
+                continue
 
-            stay_data = []
-            move_data = []
+            print(interval_stay_objs)
+            print(interval_move_objs)
+            day_data = list()
+            day_data.extend([
+                {
+                    "id": interval_obj.id,
+                    "category": interval_obj.category,
+                    "percent": interval_obj.percent,
+                    "time": {
+                        "start": interval_obj.start_time,
+                        "end": interval_obj.end_time
+                    }
 
-        content = make_response_content("성공", {})
+                } for interval_obj in interval_stay_objs
+            ])
+            day_data.extend([
+                {
+                    "id": interval_obj.id,
+                    "category": "이동",
+                    "detail": interval_obj.transport,
+                    "percent": interval_obj.percent,
+                    "time": {
+                        "start": interval_obj.start_time,
+                        "end": interval_obj.end_time
+                    }
+                } for interval_obj in interval_move_objs
+            ])
+            day_data = sorted(day_data, key=lambda info: info['time']['start'])
+            data[WEEK_NAME[i]] = day_data
+
+        content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 
 

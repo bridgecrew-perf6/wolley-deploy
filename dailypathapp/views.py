@@ -317,16 +317,20 @@ class MapLogRequestView(APIView):
 
     def get(self, request):
         content, status_code, daily_path_obj = check_daily_path_obj(request)
+
         if status_code == status.HTTP_200_OK:
-            map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj)
-            content['data']['info'] = [
-                {
-                    "coordinates": {
-                        "latitude": map_log_obj.latitude,
-                        "longitude": map_log_obj.longitude
-                    }
-                } for map_log_obj in map_log_objs
-            ]
+            content['data']['info'] = list()
+            interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
+            for interval_move_obj in interval_move_objs:
+                map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj, timestamp__range=[interval_move_obj.start_time, interval_move_obj.end_time])
+                content['data']['info'].extend([
+                    {
+                        "coordinates": {
+                            "latitude": map_log_obj.latitude,
+                            "longitude": map_log_obj.longitude
+                        }
+                    } for map_log_obj in map_log_objs
+                ])
         return Response(content, status=status_code)
 
 

@@ -17,10 +17,7 @@ def make_response_content(response_msg: str, data: Union[Dict, List]) -> Dict:
     return content
 
 
-def check_interval_objs(request: HttpRequest) -> (Dict, int, QuerySet):
-    request_user = request.headers['user']
-    request_date = request.headers['date']
-
+def check_interval_objs(request_user: str, request_date: str) -> (Dict, int, QuerySet):
     try:
         user = AppUser.objects.get(user__username=request_user)
         daily_path = DailyPath.objects.get(user=user, date=request_date)
@@ -42,6 +39,7 @@ def check_interval_objs(request: HttpRequest) -> (Dict, int, QuerySet):
     return content, status.HTTP_400_BAD_REQUEST, None, None
 
 
+## 요것도 분리하기
 def check_daily_path_objs(request: HttpRequest) -> (Dict, int, QuerySet):
     request_user = request.headers['user']
     request_date = request.headers['date']

@@ -20,6 +20,8 @@ from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
 
+WEEK = 7
+WEEK_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 def make_date_range(start: str, end: str) -> List:
     date_range = []
@@ -254,49 +256,14 @@ class PathDailyRequestView(APIView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class MonthlyRequestView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        content, status_code, daily_path_objs = check_daily_path_objs(request)
-        if status_code == status.HTTP_200_OK:
-            for daily_path_obj in daily_path_objs:
-                interval_stay_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id)
-                interval_move_objs = IntervalMove.objects.filter(daily_path_id=daily_path_obj.id)
-                info_data = list()
-                info_data.extend([
-                    {
-                        "id": interval_obj.id,
-                        "category": interval_obj.category,
-                        "percent": interval_obj.percent,
-                        "start": interval_obj.start_time
-                    } for interval_obj in interval_stay_objs
-                ])
-                info_data.extend([
-                    {
-                        "id": interval_obj.id,
-                        "category": "이동",
-                        "percent": interval_obj.percent,
-                        "start": interval_obj.start_time
-                    } for interval_obj in interval_move_objs
-                ])
-                info_data = sorted(info_data, key=lambda info: info['start'])
-
-                daily_path_data = {
-                    "id": daily_path_obj.id,
-                    "date": daily_path_obj.date,
-                    "info": info_data
-                }
-                content['data'].append(daily_path_data)
-        return Response(content, status=status_code)
-
-
-@method_decorator(csrf_exempt, name='dispatch')
 class PieChartRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        content, status_code, interval_stay_objs, interval_move_objs = check_interval_objs(request)
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+        content, status_code, interval_stay_objs, interval_move_objs = check_interval_objs(request_user, request_date)
         if status_code == status.HTTP_200_OK:
             info_data = list()
             info_data.extend([
@@ -360,4 +327,112 @@ class MapLogRequestView(APIView):
                     }
                 } for map_log_obj in map_log_objs
             ]
+        return Response(content, status=status_code)
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class WeeklyRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+        today_year, today_week, _ = datetime.today().isocalendar()
+        iso_year, iso_week, _ = datetime.strptime(request_date, "%Y-%m-%d").isocalendar()
+
+        if (today_year == iso_year) and (today_week == iso_week):
+            print("이번주")
+            content = make_response_content("week data 부족", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        data = {
+            "week_data": {
+                "monday": datetime.fromisocalendar(iso_year, iso_week, 1).strftime("%Y년 %m월 %d일"),
+                "sunday": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
+            }
+        }
+        for i in range(WEEK):
+            check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
+            day_data = list()
+
+            try:
+                user = AppUser.objects.get(user__username=request_user)
+                daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_objs)
+                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_objs)
+            except AppUser.DoesNotExist:
+                content = make_response_content("user 없음", {})
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            except DailyPath.DoesNotExist:
+                data[WEEK_NAME[i]] = day_data
+                continue
+
+            day_data.extend([
+                {
+                    "id": interval_obj.id,
+                    "category": interval_obj.category,
+                    "percent": interval_obj.percent,
+                    "time": {
+                        "start": interval_obj.start_time,
+                        "end": interval_obj.end_time
+                    }
+
+                } for interval_obj in interval_stay_objs
+            ])
+            day_data.extend([
+                {
+                    "id": interval_obj.id,
+                    "category": "이동",
+                    "detail": interval_obj.transport,
+                    "percent": interval_obj.percent,
+                    "time": {
+                        "start": interval_obj.start_time,
+                        "end": interval_obj.end_time
+                    }
+                } for interval_obj in interval_move_objs
+            ])
+            day_data = sorted(day_data, key=lambda info: info['time']['start'])
+            data[WEEK_NAME[i]] = day_data
+
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MonthlyRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        content, status_code, daily_path_objs = check_daily_path_objs(request)
+        if status_code == status.HTTP_200_OK:
+            for daily_path_obj in daily_path_objs:
+                interval_stay_objs = IntervalStay.objects.filter(daily_path_id=daily_path_obj.id)
+                interval_move_objs = IntervalMove.objects.filter(daily_path_id=daily_path_obj.id)
+                info_data = list()
+                info_data.extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": interval_obj.category,
+                        "percent": interval_obj.percent,
+                        "start": interval_obj.start_time
+                    } for interval_obj in interval_stay_objs
+                ])
+                info_data.extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": "이동",
+                        "percent": interval_obj.percent,
+                        "start": interval_obj.start_time
+                    } for interval_obj in interval_move_objs
+                ])
+                info_data = sorted(info_data, key=lambda info: info['start'])
+
+                daily_path_data = {
+                    "id": daily_path_obj.id,
+                    "date": daily_path_obj.date,
+                    "info": info_data
+                }
+                content['data'].append(daily_path_data)
         return Response(content, status=status_code)

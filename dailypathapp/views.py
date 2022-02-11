@@ -351,19 +351,18 @@ class WeeklyRequestView(APIView):
         iso_year, iso_week, _ = datetime.strptime(request_date, "%Y-%m-%d").isocalendar()
 
         if (today_year == iso_year) and (today_week == iso_week):
-            print("이번주")
             content = make_response_content("week data 부족", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
-            "week_data": {
-                "monday": datetime.fromisocalendar(iso_year, iso_week, 1).strftime("%Y년 %m월 %d일"),
-                "sunday": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
-            }
+            "term": {
+                "start": datetime.fromisocalendar(iso_year, iso_week, 1).strftime("%Y년 %m월 %d일"),
+                "end": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
+            },
+            "days": []
         }
         for i in range(DAY):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
-            day_data = list()
 
             try:
                 user = AppUser.objects.get(user__username=request_user)
@@ -374,10 +373,17 @@ class WeeklyRequestView(APIView):
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             except DailyPath.DoesNotExist:
-                data[DAY_NAME[i]] = day_data
-                continue
+                content = make_response_content("Daily path 없음", {})
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            day_data.extend([
+            day_data = {
+                "id": daily_path_objs.id,
+                "day": DAY_NAME[i],
+                "date": check_date,
+                "info": []
+            }
+
+            day_data["info"].extend([
                 {
                     "id": interval_obj.id,
                     "category": interval_obj.category,
@@ -389,7 +395,7 @@ class WeeklyRequestView(APIView):
 
                 } for interval_obj in interval_stay_objs
             ])
-            day_data.extend([
+            day_data["info"].extend([
                 {
                     "id": interval_obj.id,
                     "category": "이동",
@@ -401,8 +407,8 @@ class WeeklyRequestView(APIView):
                     }
                 } for interval_obj in interval_move_objs
             ])
-            day_data = sorted(day_data, key=lambda info: info['time']['start'])
-            data[DAY_NAME[i]] = day_data
+            day_data["info"] = sorted(day_data["info"], key=lambda x: x['time']['start'])
+            data["days"].append(day_data)
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
@@ -415,7 +421,6 @@ def make_stat_data():
         } for category in CATEGORY_SORT
     }
     return stat_data
-
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -446,7 +451,9 @@ class MonthlyRequestView(APIView):
 
         user_obj = AppUser.objects.get(user__username=request_user)
 
-        data = dict()
+        data = {
+            "weeks": {}
+        }
         cnt = (diff+1) // DAY
         for i in range(cnt):
             s_date = start_date + timedelta(7*i)
@@ -477,7 +484,7 @@ class MonthlyRequestView(APIView):
                 minutes, seconds = divmod(remainder, 60)
                 stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-            data[f"{request_year}-{request_month:02d}-{i+1}"] = stat_data
+            data["weeks"][f"{request_year}-{request_month:02d}-{i+1}"] = stat_data
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
@@ -498,7 +505,9 @@ class YearlyRequestView(APIView):
             content = make_response_content("year data 부족", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        data = dict()
+        data = {
+            "months": {}
+        }
         user_obj = AppUser.objects.get(user__username=request_user)
         for i in range(1, MONTH+1):
             stat_data = make_stat_data()
@@ -526,6 +535,6 @@ class YearlyRequestView(APIView):
                 minutes, seconds = divmod(remainder, 60)
                 stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-            data[f"{request_year}-{i:02d}"] = stat_data
+            data["months"][f"{request_year}-{i:02d}"] = stat_data
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

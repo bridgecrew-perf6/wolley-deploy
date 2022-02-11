@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 
@@ -294,7 +295,10 @@ class MapRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        content, status_code, interval_stay_objs, _ = check_interval_objs(request)
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+        content, status_code, interval_stay_objs, _ = check_interval_objs(request_user, request_date)
         if status_code == status.HTTP_200_OK:
             info_data = [
                 {
@@ -404,6 +408,16 @@ class WeeklyRequestView(APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
+def make_stat_data():
+    stat_data = {
+        category: {
+            "time": timedelta(0)
+        } for category in CATEGORY_SORT
+    }
+    return stat_data
+
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class MonthlyRequestView(APIView):
     permission_classes = [AllowAny]
@@ -414,28 +428,60 @@ class MonthlyRequestView(APIView):
 
         today = datetime.today()
         request_year, request_month, _ = map(int, request_date.split('-'))
+        _, end = calendar.monthrange(request_year, request_month)
+        start_iso = datetime(request_year, request_month, 1).isocalendar()
+        end_iso = datetime(request_year, request_month, end).isocalendar()
+
+        start_date = datetime.fromisocalendar(start_iso.year, start_iso.week, 1)
+        end_date = datetime.fromisocalendar(end_iso.year, end_iso.week, 7)
+
+        print(type(start_date), start_date)
+        print(type(end_date), end_date)
+        print(end_date-start_date)
+        diff = (end_date - start_date).days
         if request_year == today.year and request_month == today.month:
             print("이번달")
             content = make_response_content("month data 부족", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         user_obj = AppUser.objects.get(user__username=request_user)
-        daily_path_objs = DailyPath.objects.filter(user=user_obj, date__year=request_year, date__month=request_month)
-        for daily_path_obj in daily_path_objs:
-            print(daily_path_obj)
 
-            ### 주단위 기준 정하기
-        content = make_response_content("test", {})
+        data = dict()
+        cnt = (diff+1) // DAY
+        for i in range(cnt):
+            s_date = start_date + timedelta(7*i)
+            e_date = start_date + timedelta(7*i+6)
+
+            stat_data = make_stat_data()
+            total = timedelta(0)
+            daily_path_objs = DailyPath.objects.filter(user=user_obj, date__range=[s_date, e_date])
+            for daily_path_obj in daily_path_objs:
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj.id)
+                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
+
+                for interval_stay_obj in interval_stay_objs:
+                    stat_data[interval_stay_obj.category]['time'] += interval_stay_obj.end_time - interval_stay_obj.start_time
+                    total += interval_stay_obj.end_time - interval_stay_obj.start_time
+
+                for interval_move_obj in interval_move_objs:
+                    stat_data["이동"]['time'] += interval_move_obj.end_time - interval_move_obj.start_time
+                    total += interval_move_obj.end_time - interval_move_obj.start_time
+
+            for k in stat_data.keys():
+                if total != timedelta(0):
+                    stat_data[k]["percent"] = stat_data[k]['time'] / total
+                else:
+                    stat_data[k]["percent"] = 0.0
+
+                hours, remainder = divmod(stat_data[k]['time'].seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+            data[f"{request_year}-{request_month:02d}-{i+1}"] = stat_data
+
+        content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 
-
-def make_stat_data():
-    stat_data = {
-        category: {
-            "time": timedelta(0)
-        } for category in CATEGORY_SORT
-    }
-    return stat_data
 
 @method_decorator(csrf_exempt, name='dispatch')
 class YearlyRequestView(APIView):
@@ -475,8 +521,11 @@ class YearlyRequestView(APIView):
                     stat_data[k]["percent"] = stat_data[k]['time'] / total
                 else:
                     stat_data[k]["percent"] = 0.0
-                stat_data[k]['time'] = str(stat_data[k]['time'])
+
+                hours, remainder = divmod(stat_data[k]['time'].seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
             data[f"{request_year}-{i:02d}"] = stat_data
-        content = make_response_content("test", data)
+        content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

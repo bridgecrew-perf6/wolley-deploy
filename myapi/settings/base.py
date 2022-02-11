@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'recommendationapp',
+    'statisticapp',
 
     # for TestTable
     'testapp',

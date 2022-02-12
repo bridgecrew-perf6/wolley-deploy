@@ -35,5 +35,6 @@ DATABASES = {
         'PASSWORD': read_secret("MYSQL_PASSWORD"),
         'HOST': 'mariadb',
         'PORT': '3306',
+        "OPTIONS": {"charset": "utf8mb4"},
     }
 }

@@ -347,12 +347,7 @@ class WeeklyRequestView(APIView):
         request_user = request.headers['user']
         request_date = request.headers['date']
 
-        today_year, today_week, _ = datetime.today().isocalendar()
         iso_year, iso_week, _ = datetime.strptime(request_date, "%Y-%m-%d").isocalendar()
-
-        if (today_year == iso_year) and (today_week == iso_week):
-            content = make_response_content("week data 부족", {})
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
             "tag": {
@@ -363,7 +358,6 @@ class WeeklyRequestView(APIView):
         }
         for i in range(DAY):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
-
             try:
                 user = AppUser.objects.get(user__username=request_user)
                 daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
@@ -373,8 +367,14 @@ class WeeklyRequestView(APIView):
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             except DailyPath.DoesNotExist:
-                content = make_response_content("Daily path 없음", {})
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                day_data = {
+                    "id": None,
+                    "day": DAY_NAME[i],
+                    "date": check_date,
+                    "info": []
+                }
+                data["days"].append(day_data)
+                continue
 
             day_data = {
                 "id": daily_path_objs.id,
@@ -382,7 +382,6 @@ class WeeklyRequestView(APIView):
                 "date": check_date,
                 "info": []
             }
-
             day_data["info"].extend([
                 {
                     "id": interval_obj.id,
@@ -392,7 +391,6 @@ class WeeklyRequestView(APIView):
                         "start": interval_obj.start_time,
                         "end": interval_obj.end_time
                     }
-
                 } for interval_obj in interval_stay_objs
             ])
             day_data["info"].extend([

@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import requests
 from django.core.serializers.json import DjangoJSONEncoder
@@ -18,6 +18,26 @@ from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, check_daily_path_obj
 
 
+def make_diary_content(start: datetime, end: datetime, category: str) -> str:
+    hours, remainder = divmod((end - start).seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if minutes == 0:
+        time_spent = f'{hours}시간'
+    else:
+        time_spent = f'{hours}시간 {minutes}분'
+
+    if category == "집":
+        return f'{start.hour}시 {start.minute}분부터 {time_spent}동안 {category}에 있었다.'
+    elif category == "식사":
+        return f'{start.hour}시 {start.minute}분에 {category}를 했다.'
+    elif category in ["회사", "학교", "카페", "병원", "모임"]:
+        return f'{start.hour}시 {start.minute}분에 {category}에 도착하여 {time_spent}동안 있었다.'
+    elif category in ["운동", "쇼핑"]:
+        return f'{start.hour}시 {start.minute}분에 {category}을 시작하여 {time_spent}동안 {category}을 했다.'
+    else:
+        return ''
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class DiaryRequestView(APIView):
     permission_classes = [AllowAny]
@@ -34,11 +54,12 @@ class DiaryRequestView(APIView):
             if date.today().strftime("%Y-%m-%d") > request_date:
                 diary_obj = Diary.objects.create(daily_path=daily_path_obj)
 
-                intervals = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
-                diary_obj.content = [
-                    f'{interval.start_time} - {interval.end_time} {interval.category} {interval.location}'
-                    for interval in intervals
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
+                diary_content = [
+                    make_diary_content(interval_stay_obj.start_time, interval_stay_obj.end_time, interval_stay_obj.category)
+                    for interval_stay_obj in interval_stay_objs
                 ]
+                diary_obj.content = ' '.join(content for content in diary_content if content != '')
                 diary_obj.save()
             else:
                 content = make_response_content("일기 data 없음", {})

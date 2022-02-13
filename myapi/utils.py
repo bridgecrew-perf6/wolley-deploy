@@ -63,7 +63,7 @@ def check_daily_path_obj(request: HttpRequest) -> (Dict, int, DailyPath):
     try:
         user = AppUser.objects.get(user__username=request_user)
         daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
-        content = make_response_content("성공",{})
+        content = make_response_content("성공", {})
         return content, status.HTTP_200_OK, daily_path_obj
     except AppUser.DoesNotExist:
         content = make_response_content("user 없음", {})

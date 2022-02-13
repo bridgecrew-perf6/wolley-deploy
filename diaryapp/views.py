@@ -1,8 +1,5 @@
-import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
-import requests
-from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -90,7 +87,6 @@ class DiaryRequestView(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         diary_obj, created = Diary.objects.get_or_create(daily_path=daily_path_obj)
-
         diary_obj.content = request_content
         diary_obj.save()
 

@@ -355,7 +355,7 @@ class WeeklyRequestView(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
-            "term": {
+            "tag": {
                 "start": datetime.fromisocalendar(iso_year, iso_week, 1).strftime("%Y년 %m월 %d일"),
                 "end": datetime.fromisocalendar(iso_year, iso_week, 7).strftime("%Y년 %m월 %d일")
             },
@@ -414,12 +414,16 @@ class WeeklyRequestView(APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
-def make_stat_data():
-    stat_data = {
-        category: {
-            "time": timedelta(0)
+def get_category_idx(category: str) -> int:
+    return CATEGORY_SORT.index(category)
+
+def make_stat_data() -> List:
+    stat_data = [
+        {
+            "category": category,
+            "time_spent": timedelta(0)
         } for category in CATEGORY_SORT
-    }
+    ]
     return stat_data
 
 
@@ -440,9 +444,6 @@ class MonthlyRequestView(APIView):
         start_date = datetime.fromisocalendar(start_iso.year, start_iso.week, 1)
         end_date = datetime.fromisocalendar(end_iso.year, end_iso.week, 7)
 
-        print(type(start_date), start_date)
-        print(type(end_date), end_date)
-        print(end_date-start_date)
         diff = (end_date - start_date).days
         if request_year == today.year and request_month == today.month:
             print("이번달")
@@ -452,7 +453,8 @@ class MonthlyRequestView(APIView):
         user_obj = AppUser.objects.get(user__username=request_user)
 
         data = {
-            "weeks": {}
+            "tag": f'{request_year}-{request_month:02d}',
+            "weeks": []
         }
         cnt = (diff+1) // DAY
         for i in range(cnt):
@@ -467,24 +469,31 @@ class MonthlyRequestView(APIView):
                 interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
 
                 for interval_stay_obj in interval_stay_objs:
-                    stat_data[interval_stay_obj.category]['time'] += interval_stay_obj.end_time - interval_stay_obj.start_time
+                    idx = get_category_idx(interval_stay_obj.category)
+                    stat_data[idx]['time_spent'] += interval_stay_obj.end_time - interval_stay_obj.start_time
                     total += interval_stay_obj.end_time - interval_stay_obj.start_time
 
                 for interval_move_obj in interval_move_objs:
-                    stat_data["이동"]['time'] += interval_move_obj.end_time - interval_move_obj.start_time
+                    idx = get_category_idx('이동')
+                    stat_data[idx]['time_spent'] += interval_move_obj.end_time - interval_move_obj.start_time
                     total += interval_move_obj.end_time - interval_move_obj.start_time
 
-            for k in stat_data.keys():
+            for stat in stat_data:
                 if total != timedelta(0):
-                    stat_data[k]["percent"] = stat_data[k]['time'] / total
+                    stat["percent"] = stat["time_spent"] / total
                 else:
-                    stat_data[k]["percent"] = 0.0
+                    stat["percent"] = 0.0
 
-                hours, remainder = divmod(stat_data[k]['time'].seconds, 3600)
+                total_seconds = int(stat["time_spent"].total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
-                stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                stat['time_spent'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-            data["weeks"][f"{request_year}-{request_month:02d}-{i+1}"] = stat_data
+            week_data = {
+                "order": i+1,
+                "info": stat_data
+            }
+            data["weeks"].append(week_data)
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
@@ -506,10 +515,11 @@ class YearlyRequestView(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
-            "months": {}
+            "tag": f'{request_year}',
+            "months": []
         }
         user_obj = AppUser.objects.get(user__username=request_user)
-        for i in range(1, MONTH+1):
+        for i in range(MONTH):
             stat_data = make_stat_data()
             total = timedelta(0)
             daily_path_objs = DailyPath.objects.filter(user=user_obj, date__year=request_year, date__month=i)
@@ -518,23 +528,31 @@ class YearlyRequestView(APIView):
                 interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
 
                 for interval_stay_obj in interval_stay_objs:
-                    stat_data[interval_stay_obj.category]['time'] += interval_stay_obj.end_time - interval_stay_obj.start_time
+                    idx = get_category_idx(interval_stay_obj.category)
+                    stat_data[idx]['time_spent'] += interval_stay_obj.end_time - interval_stay_obj.start_time
                     total += interval_stay_obj.end_time - interval_stay_obj.start_time
 
                 for interval_move_obj in interval_move_objs:
-                    stat_data["이동"]['time'] += interval_move_obj.end_time - interval_move_obj.start_time
+                    idx = get_category_idx('이동')
+                    stat_data[idx]['time_spent'] += interval_move_obj.end_time - interval_move_obj.start_time
                     total += interval_move_obj.end_time - interval_move_obj.start_time
 
-            for k in stat_data.keys():
+            for stat in stat_data:
                 if total != timedelta(0):
-                    stat_data[k]["percent"] = stat_data[k]['time'] / total
+                    stat["percent"] = stat["time_spent"] / total
                 else:
-                    stat_data[k]["percent"] = 0.0
+                    stat["percent"] = 0.0
 
-                hours, remainder = divmod(stat_data[k]['time'].seconds, 3600)
+                total_seconds = int(stat["time_spent"].total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
-                stat_data[k]['time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                stat['time_spent'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-            data["months"][f"{request_year}-{i:02d}"] = stat_data
+            month_data = {
+                "order": i + 1,
+                "info": stat_data
+            }
+            data["months"].append(month_data)
+
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

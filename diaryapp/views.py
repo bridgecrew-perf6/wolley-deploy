@@ -43,7 +43,16 @@ class DiaryRequestView(APIView):
         request_user = request.headers['user']
         request_date = request.headers['date']
 
-        content, status_code, daily_path_obj = check_daily_path_obj(request)
+        # daily path 찾기
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+            daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        except DailyPath.DoesNotExist:
+            content = make_response_content("daily path 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             diary_obj = Diary.objects.get(daily_path=daily_path_obj)

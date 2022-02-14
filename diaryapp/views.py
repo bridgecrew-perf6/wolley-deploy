@@ -71,13 +71,13 @@ class DiaryRequestView(APIView):
                 content = make_response_content("일기 data 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        content['data'] = {
+        data = {
             "id": diary_obj.id,
             "date": request_date,
             "content": diary_obj.content
         }
-
-        return Response(content, status=status_code)
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
 
     def post(self, request):
         request_user = request.data['user']

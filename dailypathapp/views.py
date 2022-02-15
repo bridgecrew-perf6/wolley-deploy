@@ -415,6 +415,7 @@ class WeeklyRequestView(APIView):
 def get_category_idx(category: str) -> int:
     return CATEGORY_SORT.index(category)
 
+
 def make_stat_data() -> List:
     stat_data = [
         {

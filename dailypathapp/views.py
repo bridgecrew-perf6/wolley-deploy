@@ -25,6 +25,7 @@ MONTH = 12
 DAY_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
+
 def make_date_range(start: str, end: str) -> List:
     date_range = []
     start_date = datetime.strptime(start, "%Y-%m-%d")
@@ -553,4 +554,102 @@ class YearlyRequestView(APIView):
             data["months"].append(month_data)
 
         content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
+
+
+def make_date_sequence_test(time_sequence: List[Dict], user: AppUser) -> Dict:
+    if not time_sequence:
+        return {}
+
+    try:
+        start_daily_path_obj = DailyPath.objects.filter(user=user).last()
+        # 날짜의 기록이 daily path의 마지막 날짜보다 이후면 다음과 같이 처리
+        if start_daily_path_obj.date.strftime("%Y-%m-%d") < time_sequence[0]['time'][:10]:
+            start_date = start_daily_path_obj.date.strftime("%Y-%m-%d")
+        else:
+            start_date = time_sequence[0]['time'][:10]
+    except:
+        start_date = time_sequence[0]['time'][:10]
+
+    end_date = time_sequence[-1]['time'][:10]
+    date_range = make_date_range(start_date, end_date)
+    date_sequence = {d: [] for d in date_range}
+
+    for time_seq in time_sequence:
+        date_sequence[time_seq['time'][:10]].append(time_seq)
+
+    # 맨 앞
+    try:
+        daily_path_obj = DailyPath.objects.get(user=user, date=date_range[0])
+        gps_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj).order_by('timestamp')
+        old_log_data = [
+            make_date_data(
+                gps_log_obj.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                gps_log_obj.longitude,
+                gps_log_obj.latitude
+            ) for gps_log_obj in gps_log_objs
+        ]
+        date_sequence[date_range[0]] = old_log_data + date_sequence[date_range[0]]
+    except:
+        pass
+        # data = {
+        #     "user": user.user.username,
+        #     "date": date_range[0]
+        # }
+        # content = make_response_content("GPS LOG 오류", date_range)
+        # return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    # for i in range(len(date_range)):
+    #     pass
+    #     # 23:59:59 찍기
+    #     # 00:00:00 찍기
+
+    # return date_sequence
+    return {}
+
+
+# 새로운 로직의 Path Daily
+@method_decorator(csrf_exempt, name='dispatch')
+class PathDailyTestRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        request_user = request.data['user']
+        user, created = User.objects.get_or_create(username=request_user)
+        if created:
+            user.set_password('123')
+            user.save()
+
+        app_user, _ = AppUser.objects.get_or_create(user=user)
+
+        request_time_sequence = request.data['timeSequence']
+        date_sequence = make_date_sequence_test(request_time_sequence, app_user)
+
+        # for date_key, date_value in date_sequence.items():
+        #     daily_path, created = DailyPath.objects.get_or_create(user=app_user, date=date_key)
+        #
+        #     if not date_value:
+        #         continue
+        #
+        #     if created:
+        #         # 시작 GPS 추가
+        #
+        #
+        #     # GPS log 저장
+        #     for date in date_value:
+        #         GPSLog.objects.create(
+        #             daily_path=daily_path,
+        #             timestamp=datetime.strptime(date['time'], '%Y-%m-%d %H:%M:%S'),
+        #             latitude=date['coordinates']['latitude'],
+        #             longitude=date['coordinates']['longitude']
+        #         )
+        #     gps_logs = make_gps_logs(date_value)
+        #     points = generatePoints(gps_logs)
+        #     stay_point_centers, stay_points = stayPointExtraction(points)
+        #     move_points, add_flag = make_move_point(points, stay_point_centers)
+
+
+        content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)

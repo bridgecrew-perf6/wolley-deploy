@@ -107,4 +107,3 @@ class DiaryRequestView(APIView):
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
-

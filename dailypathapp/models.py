@@ -31,4 +31,4 @@ class GPSLog(models.Model):
         db_table = 'gpslog'
 
     def __str__(self):
-        return f'({self.latitude}, {self.longitude}) {self.timestamp}'
+        return f'{self.daily_path} -> ({self.latitude}, {self.longitude}) {self.timestamp}'

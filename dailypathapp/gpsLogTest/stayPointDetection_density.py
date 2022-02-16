@@ -130,7 +130,7 @@ def parseGeoTxt(lines):
 
 
 def main():
-    m = folium.Map(location=[40.007814, 116.319764])
+    m = folium.Map(location=[37.56731261356196, 126.97777599960409])
     mapDots = folium.map.FeatureGroup()
 
     count = 0

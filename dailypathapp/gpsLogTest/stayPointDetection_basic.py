@@ -112,7 +112,7 @@ def addPoints(mapDots, points, color):
 
 
 def main():
-    m = folium.Map(location=[37.566651, 126.978428])
+    m = folium.Map(location=[37.56731261356196, 126.97777599960409])
     tooltip = "hello"
     mapDots = folium.map.FeatureGroup()
 

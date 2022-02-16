@@ -52,6 +52,9 @@ INSTALLED_APPS = [
 
     # 배치 처리
     'django_apscheduler',
+
+    # script 실행
+    'django_extensions',
 ]
 
 

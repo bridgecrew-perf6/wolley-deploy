@@ -61,6 +61,7 @@ class WeekCategoryInfo(models.Model):
     week_info = models.ForeignKey(WeekInfo, on_delete=models.CASCADE, related_name="weekcategoryinfos")
 
     name = models.CharField(max_length=70)
+    date = models.DateTimeField(default=datetime.datetime.today)
     time_spent = models.DurationField(default=datetime.timedelta(minutes=20))
     percent = models.FloatField(default=0.0)
     rank = models.FloatField(default=0.0)
@@ -80,8 +81,8 @@ class Badge(models.Model):
     week_info = models.ManyToManyField(WeekInfo, related_name="badges")
 
     title = models.CharField(max_length=100)
-    desc = models.CharField(max_length=500)
-    part = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+    sector = models.CharField(max_length=100)
 
     lower_bound = models.FloatField(default=0.0)
     upper_bound = models.FloatField(default=0.0)

@@ -1,8 +1,8 @@
 from django.urls import path
-from .views import StatRequestView
+from .views import BadgeRequestView
 
 app_name = "statisticapp"
 
 urlpatterns = [
-    path('badge/', StatRequestView.as_view(), name="stat_request"),
+    path('badge/', BadgeRequestView.as_view(), name="badge_request"),
 ]

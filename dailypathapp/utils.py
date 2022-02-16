@@ -4,7 +4,7 @@ from math import radians, cos, sin, asin, sqrt
 
 from accountapp.models import Estimate, AppUser
 # from myapi.settings.__init__ import *
-from myapi.settings.deploy import SECRET_KEY
+from myapi.settings.deploy import *
 
 
 def coordinate2address(latitude, longitude):

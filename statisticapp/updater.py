@@ -23,6 +23,7 @@ def update_something():
 def get_category_idx(category: str) -> int:
     return CATEGORY_SORT.index(category)
 
+
 def make_stat_data() -> List:
     stat_data = [
         {
@@ -89,7 +90,8 @@ def make_week_info():
     #             percent=stat['percent']
     #         )
 
+
 def start():
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone='Asia/Seoul')
     scheduler.add_job(update_something, 'cron', day_of_week=3, hour=9)
     scheduler.start()

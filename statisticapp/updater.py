@@ -13,11 +13,13 @@ CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병�
 
 
 def update_something():
-    week_info = make_week_info()
+    test_text = make_week_info()
+
+    week_info = WeekInfo.objects.all()
+    week_category_info = WeekCategoryInfo.objects.all()
     TestTable.objects.create(
-        textfield=week_info
+        textfield=f'{test_text}\n{week_info}:{len(week_info)}, {week_category_info}:{len(week_category_info)}'
     )
-    # print(f"this function runs every 10 seconds {datetime.datetime.today()}")
 
 
 def get_category_idx(category: str) -> int:
@@ -34,6 +36,13 @@ def make_stat_data() -> List:
     return stat_data
 
 
+def make_time_spent(time_spent):
+    total_seconds = int(time_spent.total_seconds())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
 def make_week_info():
     today = datetime.today()
     year, week_order, _ = today.isocalendar()
@@ -42,18 +51,17 @@ def make_week_info():
     start_date = datetime.fromisocalendar(year, week_order, 1)
     end_date = datetime.fromisocalendar(year, week_order, 7)
 
-    return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
-
     user_objs = AppUser.objects.all()
     for user_obj in user_objs:
-        daily_path_objs = DailyPath.objects.filter(user=user_obj, date__range=[start_date, end_date])
-
+        # week info 생성
         week_info = WeekInfo.objects.create(
             user=user_obj,
             year=year,
             month_order=month_order,
             week_order=week_order
         )
+
+        daily_path_objs = DailyPath.objects.filter(user=user_obj, date__range=[start_date, end_date])
 
         stat_data = make_stat_data()
         total = timedelta(0)
@@ -77,16 +85,17 @@ def make_week_info():
             else:
                 stat["percent"] = 0.0
 
-            total_seconds = int(stat["time_spent"].total_seconds())
-            hours, remainder = divmod(total_seconds, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            stat['time_spent'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             WeekCategoryInfo.objects.create(
                 week_info=week_info,
                 name=stat['category'],
                 time_spent=stat['time_spent'],
                 percent=stat['percent']
             )
+
+        return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
+
+def make_category_rank():
+    pass
 
 
 def start():

@@ -1,4 +1,4 @@
-from myapi.settings.__init__ import *
+# from myapi.settings.__init__ import *
 import datetime
 from dailypathapp.models import GPSLog
 import django

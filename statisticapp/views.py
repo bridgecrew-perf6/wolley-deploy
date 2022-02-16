@@ -20,12 +20,14 @@ class StatRequestView(APIView):
     def get(self, request):
         request_user = request.headers['user']
         request_date = request.headers['date']
-        year,month,_ = map(int,request_date.split('-'))
+        year, month, _ = map(int,request_date.split('-'))
         week = datetime(year, month, 1).isocalendar().week
 
-        user = AppUser.objects.get(user__username=request_user)
-        week_info = WeekInfo.objects.get(user=user, year=year, month_order=month, week_order=week)
-        week_category_info = WeekCategoryInfo.objects.filter(week_info=week_info, name="이동")
+        # user = AppUser.objects.get(user__username=request_user)
+        # user_week_info_obj = WeekInfo.objects.get(user=user, year=year, month_order=month, week_order=week)
+        # user_week_category_info_obj = WeekCategoryInfo.objects.filter(week_info=user_week_info_obj, name="이동")
+        #
+        # week_info_objs = WeekInfo.objects.filter(year=year, month_order=month, week_order=week)
 
         data = {
             "labels": [

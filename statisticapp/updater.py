@@ -13,7 +13,11 @@ CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병�
 
 
 def update_something():
-    test_text = make_week_info()
+    today = datetime.today()
+    year, week_order, _ = today.isocalendar()
+    month_order = today.month
+
+    test_text = make_week_info(year, month_order, week_order)
 
     week_info = WeekInfo.objects.all()
     week_category_info = WeekCategoryInfo.objects.all()
@@ -43,11 +47,7 @@ def make_time_spent(time_spent):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def make_week_info():
-    today = datetime.today()
-    year, week_order, _ = today.isocalendar()
-    month_order = today.month
-
+def make_week_info(year,month_order, week_order):
     start_date = datetime.fromisocalendar(year, week_order, 1)
     end_date = datetime.fromisocalendar(year, week_order, 7)
 
@@ -95,10 +95,14 @@ def make_week_info():
         return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
 
 def make_category_rank():
+    # week_category_info 로 쿼리셋 불러와서 annotation으로 rank 생성 후
+    # week_category의 week info로 rank 업데이터
+
     pass
 
 
 def start():
     scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-    scheduler.add_job(update_something, 'cron', day_of_week='wed', hour=10, minute=00)
-    scheduler.start()
+    # scheduler.add_job(update_something, 'cron', day_of_week='wed', hour=10, minute=00)
+    # scheduler.add_job(update_something, 'interval', minutes=1)
+    # scheduler.start()

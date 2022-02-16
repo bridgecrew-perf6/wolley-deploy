@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -6,23 +6,23 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
 from intervalapp.models import IntervalStay, IntervalMove
-from statisticapp.models import WeekInfo, WeekCategoryInfo
+from statisticapp.models import WeekInfo, WeekCategoryInfo, Badge
 from testapp.models import TestTable
 
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
 
 def update_something():
-    today = datetime.today()
+    today = date.today()
     year, week_order, _ = today.isocalendar()
     month_order = today.month
 
-    test_text = make_week_info(year, month_order, week_order)
-
+    test_text_1 = make_week_info(today, year, month_order, week_order)
+    test_text_2 = make_category_rank(today)
     week_info = WeekInfo.objects.all()
     week_category_info = WeekCategoryInfo.objects.all()
     TestTable.objects.create(
-        textfield=f'{test_text}\n{week_info}:{len(week_info)}, {week_category_info}:{len(week_category_info)}'
+        textfield=f'{test_text_1}\n{test_text_2}\n{week_info}:{len(week_info)}, {week_category_info}:{len(week_category_info)}'
     )
 
 
@@ -47,11 +47,12 @@ def make_time_spent(time_spent):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def make_week_info(year,month_order, week_order):
+def make_week_info(today, year, month_order, week_order):
     start_date = datetime.fromisocalendar(year, week_order, 1)
     end_date = datetime.fromisocalendar(year, week_order, 7)
 
     user_objs = AppUser.objects.all()
+    print(user_objs)
     for user_obj in user_objs:
         # week info 생성
         week_info = WeekInfo.objects.create(
@@ -89,20 +90,37 @@ def make_week_info(year,month_order, week_order):
                 week_info=week_info,
                 name=stat['category'],
                 time_spent=stat['time_spent'],
-                percent=stat['percent']
+                percent=stat['percent'],
+                date=today
             )
 
-        return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
+    return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
 
-def make_category_rank():
+
+def make_category_rank(today):
     # week_category_info 로 쿼리셋 불러와서 annotation으로 rank 생성 후
-    # week_category의 week info로 rank 업데이터
+    return_text = ''
+    for category in CATEGORY_SORT:
+        week_category_info_objs = WeekCategoryInfo.objects.filter(name=category, date=today).order_by('-time_spent', '-percent')
+        print(week_category_info_objs)
+        total_num = len(week_category_info_objs)
+        for row_num, week_category_info_obj in enumerate(week_category_info_objs):
+            week_category_info_obj.rank = (row_num+1)/total_num
+            week_category_info_obj.save()
+            if week_category_info_obj.rank <= 0.5:
+                try:
+                    badge_obj = Badge.objects.get(sector=week_category_info_obj.name)
+                    badge_obj.week_info.add(week_category_info_obj.week_info)
+                except Badge.DoesNotExist:
+                    pass
 
-    pass
+                return_text += f'{badge_obj.id}: {badge_obj.week_info.all()}'
+    return return_text
 
 
 def start():
-    scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+    pass
+    # scheduler = BackgroundScheduler(timezone='Asia/Seoul')
     # scheduler.add_job(update_something, 'cron', day_of_week='wed', hour=10, minute=00)
     # scheduler.add_job(update_something, 'interval', minutes=1)
     # scheduler.start()

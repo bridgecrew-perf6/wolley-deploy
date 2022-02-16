@@ -4,5 +4,5 @@ from .views import StatRequestView
 app_name = "statisticapp"
 
 urlpatterns = [
-    path('stat/', StatRequestView.as_view(), name="stat_request"),
+    path('badge/', StatRequestView.as_view(), name="stat_request"),
 ]

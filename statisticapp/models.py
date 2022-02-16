@@ -82,7 +82,7 @@ class Badge(models.Model):
 
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=500)
-    part = models.CharField(max_length=100)
+    sector = models.CharField(max_length=100)
 
     lower_bound = models.FloatField(default=0.0)
     upper_bound = models.FloatField(default=0.0)

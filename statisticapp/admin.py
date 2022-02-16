@@ -8,7 +8,7 @@ class MonthInfoAdmin(admin.ModelAdmin):
 
 
 class WeekInfoAdmin(admin.ModelAdmin):
-    search_fields = ['user__user__username', 'month']
+    search_fields = ['user__user__username', 'month_order']
 
 
 admin.site.register(MonthInfo, MonthInfoAdmin)

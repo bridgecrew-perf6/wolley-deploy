@@ -3,8 +3,7 @@ import json
 from math import radians, cos, sin, asin, sqrt
 
 from accountapp.models import Estimate, AppUser
-# from myapi.settings.local import *
-from myapi.settings.deploy import *
+from myapi.settings.__init__ import *
 
 
 def coordinate2address(latitude, longitude):

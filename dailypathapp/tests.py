@@ -1,5 +1,3 @@
-
-
 from dailypathapp.dummy.dummyData import data
 import dailypathapp.stayPointDetectionBasic as sp
 
@@ -45,13 +43,14 @@ def make_dummy_timestamps():
 
 def generate_points_from_request(request_dict):
     time_seq = []
-    for data in request_dict["timeSequence"]: # 추후 request.data로 고치면 됨
+    for data in request_dict["timeSequence"]:  # 추후 request.data로 고치면 됨
         latitude = data["coordinate"]["latitude"]
         longitude = data["coordinate"]["longitude"]
         dateTime = data["time"]
         time_seq.append((latitude, longitude, dateTime))
     points = sp.generatePoints(time_seq)
     return points
+
 
 def generate_points_from_dummy_data(request_dict):
     time_seq = []
@@ -65,7 +64,7 @@ def generate_points_from_dummy_data(request_dict):
     return points
 
 
-def testtest():
+def stayPointDetection_algorithm_test():
     # 1. from request
     # request = make_dummy_timestamps()
     # points = generate_points_from_request(request)
@@ -81,10 +80,12 @@ def testtest():
     time_format = '%Y-%m-%d %H:%M:%S'
     for obj in stayPointCenter:
         name = f"{chr(asc)}장소"
-        content[name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
+        content[
+            name] = f"{time.strftime(time_format, time.localtime(obj.arriveTime))} ~ {time.strftime(time_format, time.localtime(obj.leaveTime))}"
         asc += 1
 
     return content
 
 
-print(testtest())
+if __name__ == "__main__":
+    print(stayPointDetection_algorithm_test())

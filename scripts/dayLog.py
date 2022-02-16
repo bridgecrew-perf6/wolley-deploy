@@ -1,10 +1,10 @@
-# from myapi.settings.__init__ import *
+from myapi.settings.__init__ import *
 import datetime
 from dailypathapp.models import GPSLog
 import django
 
-# os.environ.setdefault("DJANGO_SETTING_MODULE", "myapi.settings")
-# django.setup()
+os.environ.setdefault("DJANGO_SETTING_MODULE", "myapi.settings")
+django.setup()
 
 
 # python manage.py runscript -v2 gpsPrinter --script-args F1 2022-02-16

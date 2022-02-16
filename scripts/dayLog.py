@@ -7,7 +7,8 @@ os.environ.setdefault("DJANGO_SETTING_MODULE", "myapi.settings")
 django.setup()
 
 
-# python manage.py runscript -v2 gpsPrinter --script-args F1 2022-02-16
+# 로컬환경에서 : python manage.py runscript -v2 dayLog --script-args F1 2022-02-16
+# 배포환경에서 : python manage.py runscript --settings=myapi.settings.deploy -v2 dayLog --script-args F1 2022-02-16
 def run(username, date):
     date = datetime.datetime.strptime(date, '%Y-%m-%d')
     gpslogs = GPSLog.objects.filter(

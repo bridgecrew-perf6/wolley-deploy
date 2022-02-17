@@ -51,7 +51,7 @@ class TestClass(APITestCase):
         fp = open("./dailypathapp/tests/dummydata", 'r')
         cls.timeSequence = mk_timeSequence_from_txt_file(fp)
         cls.timeSequence.sort(key=lambda x: x["time"])
-        print(cls.timeSequence)
+        # print(cls.timeSequence)
         fp.close()
 
     def test_모든_GPS로그가_POST_통신_한방에_뭉텅이로_오는_시나리오(self):

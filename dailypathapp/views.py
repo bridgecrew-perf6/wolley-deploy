@@ -109,8 +109,8 @@ def make_percent(start: str, end: str) -> float:
     start_hour, start_min, start_sec = map(int, start_time.split(':'))
     end_hour, end_min, end_sec = map(int, end_time.split(':'))
 
-    start_total = start_hour * 3600 + start_min * 60 + start_sec
-    end_total = end_hour * 3600 + end_min * 60 + end_sec
+    start_total = (start_hour * 3600) + (start_min * 60) + start_sec
+    end_total = (end_hour * 3600) + (end_min * 60) + end_sec
 
     return round((end_total - start_total) / 86400, 2)
 

@@ -9,6 +9,7 @@ from intervalapp.models import IntervalStay, IntervalMove
 from statisticapp.models import WeekInfo, WeekCategoryInfo, Badge
 from testapp.models import TestTable
 
+BADGE_POINT = 0.1
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
 
@@ -98,7 +99,6 @@ def make_week_info(today, year, month_order, week_order):
 
 
 def make_category_rank(today):
-    # week_category_info 로 쿼리셋 불러와서 annotation으로 rank 생성 후
     return_text = ''
     for category in CATEGORY_SORT:
         week_category_info_objs = WeekCategoryInfo.objects.filter(name=category, date=today).order_by('-time_spent', '-percent')
@@ -107,7 +107,7 @@ def make_category_rank(today):
         for row_num, week_category_info_obj in enumerate(week_category_info_objs):
             week_category_info_obj.rank = (row_num+1)/total_num
             week_category_info_obj.save()
-            if week_category_info_obj.rank <= 0.1:
+            if week_category_info_obj.rank <= BADGE_POINT:
                 try:
                     badge_obj = Badge.objects.get(sector=week_category_info_obj.name)
                     badge_obj.week_info.add(week_category_info_obj.week_info)

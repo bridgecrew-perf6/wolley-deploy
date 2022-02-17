@@ -109,3 +109,17 @@ class DiaryRequestView(APIView):
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+
+
+        content = make_response_content("성공", {})
+        return Response(content, status=status.HTTP_200_OK)

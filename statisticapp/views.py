@@ -38,8 +38,7 @@ class BadgeRequestView(APIView):
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        # today = datetime.today()
-        today = datetime.strptime("2022-02-21", "%Y-%m-%d")
+        today = datetime.today()
         _, _, day_order = today.isocalendar()
 
         target_date = today - timedelta(days=day_order)

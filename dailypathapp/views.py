@@ -116,7 +116,7 @@ def make_percent(start: str, end: str) -> float:
 
 
 def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
-    print("Interval Stay")
+    # print("Interval Stay")
     for point in stay_point_centers:
         start_time = point.arriveTime
         end_time = point.leaveTime
@@ -138,7 +138,7 @@ def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_cent
 
 
 def make_move_interval(app_user: AppUser, daily_path: DailyPath, move_points: List[Tuple]) -> None:
-    print("Interval Move")
+    # print("Interval Move")
     for start_time, end_time in move_points:
         percent = make_percent(start_time, end_time)
         IntervalMove.objects.create(
@@ -225,7 +225,7 @@ class PathDailyRequestView(APIView):
             interval_move_obj = IntervalMove.objects.filter(daily_path=daily_path).order_by('start_time').last()
             interval_flag = check_last_interval(interval_stay_obj, interval_move_obj)
 
-            print(interval_flag, add_flag)
+            # print(interval_flag, add_flag)
             if interval_flag == "move" and add_flag == "move":
                 _, end_time = move_points.pop(0)
                 interval_move_obj.end_time = end_time
@@ -250,7 +250,7 @@ class PathDailyRequestView(APIView):
 
             make_stay_interval(app_user, daily_path, stay_point_centers)
             make_move_interval(app_user, daily_path, move_points)
-            print("daily path 하나 성공")
+            # print("daily path 하나 성공")
 
         content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)

@@ -24,4 +24,4 @@ class Diary(models.Model):
         db_table = 'diary'
 
     def __str__(self):
-        return f'{self.daily_path} -> (diary_id: {self.id}, content : {self.content[:10]}...)'
+        return f'{self.user} -> (diary_id: {self.id}, content : {self.content[:10]}...)'

@@ -92,6 +92,7 @@ def make_week_info():
 
 
 def start():
-    scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-    scheduler.add_job(update_something, 'cron', day_of_week=3, hour=9)
-    scheduler.start()
+    pass
+    # scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+    # scheduler.add_job(update_something, 'cron', day_of_week=3, hour=9)
+    # scheduler.start()

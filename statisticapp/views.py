@@ -13,7 +13,6 @@ class StatRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-
         data = {
             "labels": [
                 {

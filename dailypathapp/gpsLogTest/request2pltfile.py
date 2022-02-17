@@ -7,7 +7,7 @@ def main():
     m = folium.Map(location=[37.566651, 126.978428], zoom_start=12)
     mapDots = folium.map.FeatureGroup()
 
-    fp = open("Data/dummyfile.plt", "w")
+    fp = open("buffer/dummyfile.plt", "w")
 
     fp.writelines("Geolife trajectory\n")
     fp.writelines("WGS 84\n")

@@ -117,7 +117,7 @@ def addPoints(mapDots, points, color):
         ))
 
 
-# parse lines into points
+# parse lines into points (.plt format)
 def parseGeoTxt(lines):
     points = []
     for line in lines:
@@ -126,6 +126,20 @@ def parseGeoTxt(lines):
         longitude = float(field_pointi[1])
         dateTime = field_pointi[-2] + ',' + field_pointi[-1]
         points.append(Point(latitude, longitude, dateTime, 0, 0))
+    return points
+
+
+# parse lines into points (.txt format)
+def parseGeoTxt2(lines):
+    points = []
+    for line in lines:
+        coarse_list = line.rstrip().split()
+        latitude = float(coarse_list[-4][1:-1])
+        longitude = float(coarse_list[-3][:-1])
+        date_str = coarse_list[-2]
+        time_str = coarse_list[-1]
+        timestamp = f"{date_str},{time_str}"
+        points.append(Point(latitude, longitude, timestamp, 0, 0))
     return points
 
 
@@ -138,12 +152,12 @@ def main():
         filenum = len(filenames)
         print(filenum, "files found")
         for filename in filenames:
-            if filename.endswith('plt'):
+            if filename.endswith('plt') or filename.endswith('txt'):
                 gpsfile = os.path.join(dirname, filename)
                 print("processing:", gpsfile)
                 log = open(gpsfile, 'r')
                 lines = log.readlines()[6:]  # first 6 lines are useless
-                points = parseGeoTxt(lines)
+                points = parseGeoTxt(lines) if filename.endswith('plt') else parseGeoTxt2(lines)
                 stayPointCenter, stayPoint = stayPointExtraction(points)
                 addPoints(mapDots, points, "black")
 
@@ -153,7 +167,10 @@ def main():
                     addPoints(mapDots, stayPointCenter, "red")
 
                     # writen into file ./StayPoint/*.plt
-                    spfile = gpsfile.replace('Data', 'StayPoint').replace('.plt', '_density.plt')
+                    if filename.endswith('plt'):
+                        spfile = gpsfile.replace('Data', 'StayPoint').replace('.plt', '_density.plt')
+                    elif filename.endswith('txt'):
+                        spfile = gpsfile.replace('Data', 'StayPoint').replace('.txt', '_density.txt')
                     if not os.path.exists(os.path.dirname(spfile)):
                         os.makedirs(os.path.dirname(spfile))
                     spfile_handle = open(spfile, 'w+')
@@ -168,6 +185,7 @@ def main():
                     count += 1
                 else:
                     print(gpsfile, "has no stay point")
+
         print(count, "out of", filenum, "files contain stay points")
 
     # show stay points on map

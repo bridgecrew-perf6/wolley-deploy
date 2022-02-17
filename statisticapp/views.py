@@ -154,42 +154,38 @@ class DummyBadgeRequestView(APIView):
     def get(self, request):
         request_user = request.headers['user']
         dummy_data = {
-            "responseMsg": "성공",
-            "data": {
-                "topBadge": {
-                    "title": "이 주의 농노!",
-                    "description": "혹시 판교에서 커피와 사탕수수를 재배하시나요?! 플랜테이션에 이바지하는 당신!",
-                    "sector": "회사",
-                    "detail": [
-                        {
-                            "id": 1,
-                            "date": "2022-02-16",
-                            "location": "서울대 집무실",
-                            "timeSpent": "20시간 7분"
-                        },
-                        {
-                            "id": 2,
-                            "date": "2022-02-15",
-                            "location": "목동 집무실",
-                            "timeSpent": "13시간 8분"
-                        },
-                        {
-                            "id": 3,
-                            "date": "2022-02-14",
-                            "location": "왕십리 집무실",
-                            "timeSpent": "9시간 2분"
-                        }
-                    ]
-                },
-                "badges": [
+            "topBadge": {
+                "title": "이 주의 농노!",
+                "description": "혹시 판교에서 커피와 사탕수수를 재배하시나요?! 플랜테이션에 이바지하는 당신!",
+                "sector": "회사",
+                "detail": [
                     {
-                        "title": "이 주의 먹방왕!",
-                        "description": "식사를 많이 한 당신! 맛있는 것을 먹으며 스트레스를 마구 풀어보세요!",
-                        "sector": "식사"
+                        "id": 1,
+                        "date": "02월 16일",
+                        "location": "서울대 집무실",
+                        "timeSpent": "20시간 7분"
+                    },
+                    {
+                        "id": 2,
+                        "date": "02월 15일",
+                        "location": "목동 집무실",
+                        "timeSpent": "13시간 8분"
+                    },
+                    {
+                        "id": 3,
+                        "date": "02월 14일",
+                        "location": "왕십리 집무실",
+                        "timeSpent": "9시간 2분"
                     }
                 ]
-            }
+            },
+            "badges": [
+                {
+                    "title": "이 주의 먹방왕!",
+                    "description": "식사를 많이 한 당신! 맛있는 것을 먹으며 스트레스를 마구 풀어보세요!",
+                    "sector": "식사"
+                }
+            ]
         }
-
         content = make_response_content("성공", dummy_data)
         return Response(content, status=status.HTTP_200_OK)

@@ -3,10 +3,10 @@ from django.urls import reverse
 
 from rest_framework.test import APITestCase
 from rest_framework import status
-from dailypathapp.models import GPSLog
+from intervalapp.models import IntervalStay, IntervalMove
 
-import os
-import datetime
+import json
+import random
 
 """
 3 시나리오
@@ -17,62 +17,97 @@ import datetime
 """
 
 
+def parse(coarse_list):
+    latitude = float(coarse_list[-4][1:-1])
+    longitude = float(coarse_list[-3][:-1])
+
+    date_str = coarse_list[-2]
+    time_str = coarse_list[-1]
+    timestamp = f"{date_str} {time_str}"
+
+    return latitude, longitude, timestamp
+
+
+def mk_timeSequence_from_txt_file(fp):
+    timeSequence = list()
+    for line in fp.readlines():
+        line_splited = line.rstrip().split()
+        lat, long, timestamp = parse(line_splited)
+        data = {"time": timestamp, "coordinates": {"latitude": lat, "longitude": long}}
+        timeSequence.append(data)
+    return timeSequence
+
+
 """
-- shell 명령
-export TestStartDate=2020-02-06;
-export TestEndDate=2020-02-07; 
-export TestUser=F123; 
 python manage.py test dailypathapp.tests.test_making_intervals;
 """
 
 
-class MyIntervalTestClass(APITestCase):
-    username = ""
-    start_date = ""
-    end_date = ""
+class TestClass(APITestCase):
+    timeSequence = list()
 
     @classmethod
     def setUpTestData(cls):
-        cls.username = os.environ["TestUser"]
-        cls.start_date = os.environ["TestStartDate"]
-        cls.end_date = os.environ["TestEndDate"]
-        print("\n***** YOUR input DATA *****")
-        print(f"user: {cls.username}, start_date: {cls.start_date}, end_date: {cls.end_date}")
-        print("***** YOUR input DATA *****\n")
-        pass
+        fp = open("./dailypathapp/tests/dummydata", 'r')
+        cls.timeSequence = mk_timeSequence_from_txt_file(fp)
+        cls.timeSequence.sort(key=lambda x: x["time"])
+        print(cls.timeSequence)
+        fp.close()
 
-    def test_POST_chunk_data(self):
-        start_date = datetime.datetime.strptime(self.start_date, '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(self.end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
-
-        gpslogs = GPSLog.objects.filter(daily_path__user__user__username__icontains=self.username,
-                                        timestamp__gte=start_date,
-                                        timestamp__lte=end_date,
-                                        )
-
+    def test_모든_GPS로그가_POST_통신_한방에_뭉텅이로_오는_시나리오(self):
+        data_to_send = {"user": "TESTBOY", "timeSequence": self.timeSequence}
         url = reverse(viewname="dailypathapp:pathdaily_request")
+        json_data = json.dumps(data_to_send)
+        response = self.client.post(
+            path=url,
+            data=json_data,
+            content_type="application/json"
+        )
 
-        data_to_req = dict()
-        if len(gpslogs) != 0:
-            gpslog_obj = gpslogs[0]
-            username = gpslog_obj.daily_path.user.user.username
-            data_to_req["user"] = username
-            print("입력 user에 해당하는 GPSLog 없음")
-            return
-
-        data_to_req["timeSequence"] = list()
-        for gpslog in gpslogs:
-            timestamp = dict()
-            timestamp["time"] = gpslog.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-            timestamp["coordinates"] = dict()
-            timestamp["coordinates"]["latitude"] = gpslog.latitude
-            timestamp["coordinates"]["longitude"] = gpslog.longitude
-            data_to_req["timeSequence"].append(timestamp)
-
-        print("***** GPS Days Log *****")
-        print(data_to_req)
-        print("***** GPS Days Log *****")
-
-        response = self.client.post(path=url, data=data_to_req)
-        print(response)
+        print("\n********** (뭉텅이) RESULT ************")
+        print(f"IntervalStay: {len(IntervalStay.objects.all())} 개")
+        print(f"IntervalMove: {len(IntervalMove.objects.all())} 개")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print("******************************")
+
+    def test_모든_GPS로그_각각이_POST_통신으로_쪼개져서_오는_시나리오(self):
+        for timestamp in self.timeSequence:
+            data_to_send = {"user": "TESTBOY", "timeSequence": [timestamp]}
+            url = reverse(viewname="dailypathapp:pathdaily_request")
+            json_data = json.dumps(data_to_send)
+            response = self.client.post(
+                path=url,
+                data=json_data,
+                content_type="application/json"
+            )
+
+        print("\n********** (모든로그가POST) RESULT ************")
+        print(f"IntervalStay: {len(IntervalStay.objects.all())} 개")
+        print(f"IntervalMove: {len(IntervalMove.objects.all())} 개")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print("******************************")
+
+    def test_GPS로그가_드문드문_POST통신으로_넘어오는_시나리오(self):
+        chk = [False for _ in range(len(self.timeSequence))]
+        for _ in range(10):
+            chk[random.randint(1, len(self.timeSequence) - 1)] = True
+
+        l = 0
+        for r, timestamp in enumerate(self.timeSequence):
+            if chk[r]:
+                data_to_send = {"user": "TESTBOY", "timeSequence": self.timeSequence[l:r]}
+                url = reverse(viewname="dailypathapp:pathdaily_request")
+                json_data = json.dumps(data_to_send)
+                response = self.client.post(
+                    path=url,
+                    data=json_data,
+                    content_type="application/json"
+                )
+                l = r
+
+        print("\n********** (이따금씩POST) RESULT ************")
+        print(IntervalStay.objects.all())
+        print(f"IntervalStay: {len(IntervalStay.objects.all())} 개")
+        print(f"IntervalMove: {len(IntervalMove.objects.all())} 개")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print("******************************")

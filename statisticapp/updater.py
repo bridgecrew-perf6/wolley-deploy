@@ -13,13 +13,14 @@ BADGE_POINT = 0.1
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
 
-def update_something():
-    today = date.today()
-    year, week_order, _ = today.isocalendar()
-    month_order = today.month
+def weekly_batch():
+    # 배치 시작과 동시에 날짜 기준 정리
+    batch_day = date.today() - timedelta(days=1)
+    year, week_order, _ = batch_day.isocalendar()
+    month_order = batch_day.month
 
-    test_text_1 = make_week_info(today, year, month_order, week_order)
-    test_text_2 = make_category_rank(today)
+    test_text_1 = make_week_info(batch_day, year, month_order, week_order)
+    test_text_2 = make_category_rank(batch_day)
     week_info = WeekInfo.objects.all()
     week_category_info = WeekCategoryInfo.objects.all()
     TestTable.objects.create(
@@ -121,6 +122,6 @@ def make_category_rank(today):
 def start():
     pass
     # scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-    # scheduler.add_job(update_something, 'cron', day_of_week='wed', hour=10, minute=00)
+    # scheduler.add_job(weekly_batch, 'cron', day_of_week='wed', hour=10, minute=00)
     # scheduler.add_job(update_something, 'interval', minutes=1)
     # scheduler.start()

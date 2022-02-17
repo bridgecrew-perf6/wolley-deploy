@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Dict
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -13,8 +12,7 @@ from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content
-from statisticapp.models import WeekInfo, WeekCategoryInfo
-from statisticapp.updater import weekly_batch
+from statisticapp.models import WeekInfo, WeekCategoryInfo, Badge
 
 
 def make_time_spent(total_time):
@@ -23,12 +21,16 @@ def make_time_spent(total_time):
     minutes, seconds = divmod(remainder, 60)
     return f"{hours}시간 {minutes}분"
 
+
+def make_date(obj_date):
+    return f'{obj_date.month}월 {obj_date.day}일'
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class BadgeRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-
         request_user = request.headers['user']
         try:
             user = AppUser.objects.get(user__username=request_user)
@@ -58,23 +60,51 @@ class BadgeRequestView(APIView):
             "badges": []
         }
 
+        start_date = datetime.fromisocalendar(year, week_order, 1)
+        end_date = datetime.fromisocalendar(year, week_order, 7)
+        detail_data = []
         if not sector_sort:
-            badge_data['topBadge'] = {
-                "title": "균형의 수호자",
-                "description": "작은 육각형 인재",
-                "sector": "X"
-            }
-            detail_data = []
-            for user_week_category_info_obj in user_week_category_info_objs:
-                detail_data.append({
-                    "date": user_week_category_info_obj.date,
-                    "location": user_week_category_info_obj.name,
-                    "timeSpent": make_time_spent(user_week_category_info_obj.time_spent)
-                })
-            badge_data['topBadge']['detail'] = sorted(detail_data, key=lambda x: -x['timeSpent'])[:3]
+            try:
+                badge_obj = user_week_info_obj.badges.get(sector='무')
+                badge_data['topBadge'] = {
+                    "title": badge_obj.title,
+                    "description": badge_obj.description,
+                    "sector": badge_obj.sector
+                }
+            except Badge.DoesNotExist:
+                badge_data['topBadge'] = {
+                    "title": "균형의 수호자",
+                    "description": "균형을 지킨 당신을 위한 특별한 히든 뱃지",
+                    "sector": "무"
+                }
+
+            daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])
+            for daily_path_obj in daily_path_objs:
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj)
+                for interval_stay_obj in interval_stay_objs:
+                    total_time = interval_stay_obj.end_time - interval_stay_obj.start_time
+                    detail_data.append({
+                        "id": interval_stay_obj.id,
+                        "date": make_date(daily_path_obj.date),
+                        "location": interval_stay_obj.location,
+                        "timeSpent": make_time_spent(total_time),
+                        "sortKey": total_time
+                    })
+            badge_data['topBadge']['detail'] = [
+                {
+                    "id": detail['id'],
+                    "date": detail['date'],
+                    "location": detail['location'],
+                    "timeSpent": detail['timeSpent'],
+                } for detail in sorted(detail_data, key=lambda x: -x['sortKey'])[:3]
+            ]
         else:
             for idx, sector in enumerate(sector_sort):
-                badge_obj = user_week_info_obj.badges.get(sector=sector)
+                try:
+                    badge_obj = user_week_info_obj.badges.get(sector=sector)
+                except Badge.DoesNotExist:
+                    continue
+
                 if idx == 0:
                     # topBadge
                     badge_data['topBadge'] = {
@@ -82,11 +112,6 @@ class BadgeRequestView(APIView):
                         "description": badge_obj.description,
                         "sector": badge_obj.sector,
                     }
-
-                    start_date = datetime.fromisocalendar(year, week_order, 1)
-                    end_date = datetime.fromisocalendar(year, week_order, 7)
-
-                    detail_data = []
                     daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])
                     for daily_path_obj in daily_path_objs:
                         interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj, category=badge_obj.sector)
@@ -94,13 +119,21 @@ class BadgeRequestView(APIView):
                             total_time = interval_stay_obj.end_time - interval_stay_obj.start_time
                             detail_data.append({
                                 "id": interval_stay_obj.id,
-                                "date": daily_path_obj.date,
+                                "date": make_date(daily_path_obj.date),
                                 "location": interval_stay_obj.location,
-                                "timeSpent": make_time_spent(total_time)
+                                "timeSpent": make_time_spent(total_time),
+                                "sortKey": total_time
                             })
-                    badge_data['topBadge']['detail'] = sorted(detail_data, key=lambda x: -x['timeSpent'])[:3]
+                    badge_data['topBadge']['detail'] =[
+                        {
+                            "id": detail['id'],
+                            "date": detail['date'],
+                            "location": detail['location'],
+                            "timeSpent": detail['timeSpent'],
+                        } for detail in sorted(detail_data, key=lambda x: -x['sortKey'])[:3]
+                    ]
                 else:
-                    badge_data.append({
+                    badge_data['badges'].append({
                         "title": badge_obj.title,
                         "description": badge_obj.description,
                         "sector": badge_obj.sector

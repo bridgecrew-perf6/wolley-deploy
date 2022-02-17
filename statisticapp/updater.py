@@ -107,7 +107,6 @@ def make_category_rank(year, month_order, week_order):
             week_info__month_order=month_order,
             week_info__week_order=week_order
         ).order_by('-time_spent', '-percent')
-        # row number 적용하기
         total_num = len(week_category_info_objs)
         for row_num, week_category_info_obj in enumerate(week_category_info_objs):
             week_category_info_obj.rank = (row_num+1)/total_num
@@ -121,7 +120,6 @@ def make_category_rank(year, month_order, week_order):
 
                 return_text += f'{badge_obj.id}: {badge_obj.week_info.all()}'
     return return_text
-
 
 
 def start():

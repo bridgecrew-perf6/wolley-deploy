@@ -32,7 +32,11 @@ class BadgeRequestView(APIView):
 
         request_user = request.headers['user']
         request_date = request.headers['date']
-        user = AppUser.objects.get(user__username=request_user)
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         year, week_order, _ = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').isocalendar()
         month_order = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').month

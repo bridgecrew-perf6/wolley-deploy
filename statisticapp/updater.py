@@ -123,9 +123,10 @@ def make_category_rank(year, month_order, week_order):
     return return_text
 
 
+
 def start():
     pass
     # scheduler = BackgroundScheduler(timezone='Asia/Seoul')
     # scheduler.add_job(weekly_batch, 'cron', day_of_week='wed', hour=10, minute=00)
-    # scheduler.add_job(update_something, 'interval', minutes=1)
+    # scheduler.add_job(weekly_batch, 'interval', minutes=1)
     # scheduler.start()

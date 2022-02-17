@@ -46,30 +46,35 @@ class DiaryRequestView(APIView):
         # daily path 찾기
         try:
             user = AppUser.objects.get(user__username=request_user)
-            daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
         except AppUser.DoesNotExist:
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        except DailyPath.DoesNotExist:
-            content = make_response_content("daily path 없음", {})
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            diary_obj = Diary.objects.get(daily_path=daily_path_obj)
+            diary_obj = Diary.objects.get(user=user, date=request_date)
         except Diary.DoesNotExist:
             if date.today().strftime("%Y-%m-%d") > request_date:
-                diary_obj = Diary.objects.create(daily_path=daily_path_obj)
-
-                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
-                diary_content = [
-                    make_diary_content(interval_stay_obj.start_time, interval_stay_obj.end_time, interval_stay_obj.category)
-                    for interval_stay_obj in interval_stay_objs
-                ]
-                diary_obj.content = ' '.join(content for content in diary_content if content != '')
-                diary_obj.save()
+                diary_obj = Diary.objects.create(user=user, date=request_date, content='')
             else:
                 content = make_response_content("일기 data 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        no_content = "일기를 작성할 기록이 없습니다."
+        if diary_obj.content == '' or diary_obj.content == no_content:
+            try:
+                daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
+                diary_content = [
+                    make_diary_content(interval_stay_obj.start_time, interval_stay_obj.end_time,
+                                       interval_stay_obj.category)
+                    for interval_stay_obj in interval_stay_objs
+                ]
+                content = ' '.join(content for content in diary_content if content != '')
+                diary_obj.content = content if content else no_content
+            except:
+                diary_obj.content = no_content
+
+            diary_obj.save()
 
         data = {
             "id": diary_obj.id,
@@ -87,15 +92,11 @@ class DiaryRequestView(APIView):
         # daily path 찾기
         try:
             user = AppUser.objects.get(user__username=request_user)
-            daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
         except AppUser.DoesNotExist:
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        except DailyPath.DoesNotExist:
-            content = make_response_content("daily path 없음", {})
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        diary_obj, created = Diary.objects.get_or_create(daily_path=daily_path_obj)
+        diary_obj, created = Diary.objects.get_or_create(user=user, date=request_date)
         diary_obj.content = request_content
         diary_obj.save()
 

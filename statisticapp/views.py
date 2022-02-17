@@ -48,6 +48,7 @@ class BadgeRequestView(APIView):
             "topBadge": {},
             "badges": []
         }
+
         if not sector_sort:
             badge_data['topBadge'] = {
                 "title": "균형의 수호자",

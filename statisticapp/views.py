@@ -14,7 +14,7 @@ from dailypathapp.models import DailyPath
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content
 from statisticapp.models import WeekInfo, WeekCategoryInfo
-from statisticapp.updater import update_something
+from statisticapp.updater import weekly_batch
 
 
 def make_time_spent(total_time):
@@ -31,14 +31,13 @@ class BadgeRequestView(APIView):
         # update_something()
 
         request_user = request.headers['user']
+        request_date = request.headers['date']
         user = AppUser.objects.get(user__username=request_user)
 
-        request_date = request.headers['date']
-        year, month, _ = map(int, request_date.split('-'))
-        week = datetime(year, month, 1).isocalendar().week
+        year, week_order, _ = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').isocalendar()
+        month_order = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').month
 
-
-        user_week_info_obj = WeekInfo.objects.get(user=user, year=year, month_order=month, week_order=week)
+        user_week_info_obj = WeekInfo.objects.get(user=user, year=year, month_order=month_order, week_order=week_order)
 
         user_week_category_info_objs = WeekCategoryInfo.objects.filter(week_info=user_week_info_obj).exclude(percent=0).order_by('rank')
         sector_sort = [
@@ -74,8 +73,8 @@ class BadgeRequestView(APIView):
                         "sector": badge_obj.sector,
                     }
 
-                    start_date = datetime.fromisocalendar(year, week, 1)
-                    end_date = datetime.fromisocalendar(year, week, 7)
+                    start_date = datetime.fromisocalendar(year, week_order, 1)
+                    end_date = datetime.fromisocalendar(year, week_order, 7)
 
                     detail_data = []
                     daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])

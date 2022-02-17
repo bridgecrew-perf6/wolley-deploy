@@ -19,8 +19,8 @@ def weekly_batch():
     year, week_order, _ = batch_day.isocalendar()
     month_order = batch_day.month
 
-    test_text_1 = make_week_info(batch_day, year, month_order, week_order)
-    test_text_2 = make_category_rank(batch_day)
+    test_text_1 = make_week_info(year, month_order, week_order, batch_day)
+    test_text_2 = make_category_rank(year, month_order, week_order)
     week_info = WeekInfo.objects.all()
     week_category_info = WeekCategoryInfo.objects.all()
     TestTable.objects.create(
@@ -49,12 +49,11 @@ def make_time_spent(time_spent):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def make_week_info(today, year, month_order, week_order):
+def make_week_info(year, month_order, week_order, batch_day):
     start_date = datetime.fromisocalendar(year, week_order, 1)
     end_date = datetime.fromisocalendar(year, week_order, 7)
 
     user_objs = AppUser.objects.all()
-    print(user_objs)
     for user_obj in user_objs:
         # week info 생성
         week_info = WeekInfo.objects.create(
@@ -93,17 +92,22 @@ def make_week_info(today, year, month_order, week_order):
                 name=stat['category'],
                 time_spent=stat['time_spent'],
                 percent=stat['percent'],
-                date=today
+                date=batch_day
             )
 
     return f'{year}-{month_order}-{week_order} Testing {start_date}~{end_date}'
 
 
-def make_category_rank(today):
+def make_category_rank(year, month_order, week_order):
     return_text = ''
     for category in CATEGORY_SORT:
-        week_category_info_objs = WeekCategoryInfo.objects.filter(name=category, date=today).order_by('-time_spent', '-percent')
-        print(week_category_info_objs)
+        week_category_info_objs = WeekCategoryInfo.objects.filter(
+            name=category,
+            week_info__year=year,
+            week_info__month_order=month_order,
+            week_info__week_order=week_order
+        ).order_by('-time_spent', '-percent')
+        # row number 적용하기
         total_num = len(week_category_info_objs)
         for row_num, week_category_info_obj in enumerate(week_category_info_objs):
             week_category_info_obj.rank = (row_num+1)/total_num

@@ -1,6 +1,6 @@
 import calendar
 from datetime import datetime, timedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
 
 from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
@@ -25,12 +25,13 @@ MONTH = 12
 DAY_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
 
+
 def make_date_range(start: str, end: str) -> List:
     date_range = []
     start_date = datetime.strptime(start, "%Y-%m-%d")
     end_date = datetime.strptime(end, "%Y-%m-%d")
     delta = end_date - start_date
-    for i in range(delta.days+1):
+    for i in range(delta.days + 1):
         now = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
         date_range.append(now)
     return date_range
@@ -165,7 +166,7 @@ def check_last_interval(interval_stay_obj: IntervalStay, interval_move_obj: Inte
 
 
 # 나중에 함수 분리하기
-def make_move_point(points: Point, stay_point_centers: List[Point]) -> List:
+def make_move_point(points: Point, stay_point_centers: List[Point]) -> Tuple[List[Tuple[Any, Any]], str]:
     move_range = []
     flag = "stay"
 
@@ -178,8 +179,8 @@ def make_move_point(points: Point, stay_point_centers: List[Point]) -> List:
         move_range.append((points[0].dateTime, stay_point_centers[0].arriveTime))
         flag = "move"
 
-    for i in range(len(stay_point_centers)-1):
-        move_range.append((stay_point_centers[i].leaveTime, stay_point_centers[i+1].arriveTime))
+    for i in range(len(stay_point_centers) - 1):
+        move_range.append((stay_point_centers[i].leaveTime, stay_point_centers[i + 1].arriveTime))
 
     if points[-1].dateTime != stay_point_centers[-1].leaveTime:
         move_range.append((stay_point_centers[-1].leaveTime, points[-1].dateTime))
@@ -326,7 +327,9 @@ class MapLogRequestView(APIView):
             content['data']['info'] = list()
             interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
             for interval_move_obj in interval_move_objs:
-                map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj, timestamp__range=[interval_move_obj.start_time, interval_move_obj.end_time])
+                map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj,
+                                                     timestamp__range=[interval_move_obj.start_time,
+                                                                       interval_move_obj.end_time])
                 content['data']['info'].extend([
                     {
                         "coordinates": {
@@ -336,7 +339,6 @@ class MapLogRequestView(APIView):
                     } for map_log_obj in map_log_objs
                 ])
         return Response(content, status=status_code)
-
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -357,7 +359,7 @@ class WeeklyRequestView(APIView):
             "days": []
         }
         for i in range(DAY):
-            check_date = datetime.fromisocalendar(iso_year, iso_week, i+1)
+            check_date = datetime.fromisocalendar(iso_year, iso_week, i + 1)
             try:
                 user = AppUser.objects.get(user__username=request_user)
                 daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
@@ -455,10 +457,10 @@ class MonthlyRequestView(APIView):
             "tag": f'{request_year}-{request_month:02d}',
             "weeks": []
         }
-        cnt = (diff+1) // DAY
+        cnt = (diff + 1) // DAY
         for i in range(cnt):
-            s_date = start_date + timedelta(7*i)
-            e_date = start_date + timedelta(7*i+6)
+            s_date = start_date + timedelta(7 * i)
+            e_date = start_date + timedelta(7 * i + 6)
 
             stat_data = make_stat_data()
             total = timedelta(0)
@@ -489,7 +491,7 @@ class MonthlyRequestView(APIView):
                 stat['time_spent'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
             week_data = {
-                "order": i+1,
+                "order": i + 1,
                 "info": stat_data
             }
             data["weeks"].append(week_data)

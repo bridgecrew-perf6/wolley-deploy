@@ -59,7 +59,8 @@ class DiaryRequestView(APIView):
                 content = make_response_content("일기 data 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        if diary_obj.content == '':
+        no_content = "일기를 작성할 기록이 없습니다."
+        if diary_obj.content == '' or diary_obj.content == no_content:
             try:
                 daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
                 interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj).order_by('start_time')
@@ -68,9 +69,10 @@ class DiaryRequestView(APIView):
                                        interval_stay_obj.category)
                     for interval_stay_obj in interval_stay_objs
                 ]
-                diary_obj.content = ' '.join(content for content in diary_content if content != '')
+                content = ' '.join(content for content in diary_content if content != '')
+                diary_obj.content = content if content else no_content
             except:
-                diary_obj.content = "일기를 작성할 기록이 없습니다."
+                diary_obj.content = no_content
 
             diary_obj.save()
 

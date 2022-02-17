@@ -81,16 +81,14 @@ class BadgeRequestView(APIView):
                     daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])
                     for daily_path_obj in daily_path_objs:
                         interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj, category=badge_obj.sector)
-                        total_time = timedelta(0)
-
                         for interval_stay_obj in interval_stay_objs:
-                            total_time += interval_stay_obj.end_time - interval_stay_obj.start_time
-
-                        detail_data.append({
-                            "date": daily_path_obj.date,
-                            "location": "???",
-                            "timeSpent": make_time_spent(total_time)
-                        })
+                            total_time = interval_stay_obj.end_time - interval_stay_obj.start_time
+                            detail_data.append({
+                                "id": interval_stay_obj.id,
+                                "date": daily_path_obj.date,
+                                "location": interval_stay_obj.location,
+                                "timeSpent": make_time_spent(total_time)
+                            })
                     badge_data['topBadge']['detail'] = sorted(detail_data, key=lambda x: -x['timeSpent'])[:3]
                 else:
                     badge_data.append({
@@ -99,46 +97,5 @@ class BadgeRequestView(APIView):
                         "sector": badge_obj.sector
                     })
 
-        temp_badge_data = {
-            "topBadge": {
-                "title": "워커홀릭",
-                "description": "회사에서 보낸 시간이 상위 10%",
-                "sector": "work",
-                "detail": [
-                    {
-                        "date": "2022-02-16",
-                        "location": "집무실",
-                        "timeSpent": "00:00:00"
-                    },
-                    {
-                        "date": "2022-02-15",
-                        "location": "집무실",
-                        "timeSpent": "00:00:00"
-                    },
-                    {
-                        "date": "2022-02-14",
-                        "location": "집무실",
-                        "timeSpent": "00:00:00"
-                    }
-                ]
-            },
-            "badges": [
-                {
-                    "title": "워커홀릭",
-                    "description": "회사에서 보낸 시간이 상위 10%",
-                    "sector": "work"
-                },
-                {
-                    "title": "워커홀릭",
-                    "description": "회사에서 보낸 시간이 상위 10%",
-                    "sector": "work"
-                },
-                {
-                    "title": "워커홀릭",
-                    "description": "회사에서 보낸 시간이 상위 10%",
-                    "sector": "work"
-                }
-            ]
-        }
-        content = make_response_content("성공", temp_badge_data)
+        content = make_response_content("성공", badge_data)
         return Response(content, status=status.HTTP_200_OK)

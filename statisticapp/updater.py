@@ -107,7 +107,7 @@ def make_category_rank(today):
         for row_num, week_category_info_obj in enumerate(week_category_info_objs):
             week_category_info_obj.rank = (row_num+1)/total_num
             week_category_info_obj.save()
-            if week_category_info_obj.rank <= 0.5:
+            if week_category_info_obj.rank <= 0.1:
                 try:
                     badge_obj = Badge.objects.get(sector=week_category_info_obj.name)
                     badge_obj.week_info.add(week_category_info_obj.week_info)

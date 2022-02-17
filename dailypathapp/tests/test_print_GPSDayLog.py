@@ -1,8 +1,4 @@
-from django.contrib.auth.models import User
-from django.urls import reverse
-
 from rest_framework.test import APITestCase
-from rest_framework import status
 from dailypathapp.models import GPSLog
 
 import os
@@ -14,6 +10,8 @@ export TestDate=2020-02-06;
 export TestUser=F123;
 python manage.py test dailypathapp.tests.test_print_GPSDayLog;
 """
+
+
 class MyDayLogClass(APITestCase):
     username = ""
     date = ""
@@ -23,7 +21,8 @@ class MyDayLogClass(APITestCase):
         cls.username = os.environ["TestUser"]
         cls.date = os.environ["TestDate"]
         print("\n***** YOUR input DATA *****")
-        print(f"user: {cls.username}, date: {cls.date}")
+        print(f"user: {cls.username}")
+        print(f"date: {cls.date}")
         print("***** YOUR input DATA *****\n")
         pass
 
@@ -41,6 +40,8 @@ class MyDayLogClass(APITestCase):
             gpslog_obj = gpslogs[0]
             username = gpslog_obj.daily_path.user.user.username
             data_to_print["user"] = username
+            print("입력한 user에 해당하는 GPSLog 없음")
+            return
 
         data_to_print["timeSequence"] = list()
         for gpslog in gpslogs:
@@ -51,6 +52,6 @@ class MyDayLogClass(APITestCase):
             timestamp["coordinates"]["longitude"] = gpslog.longitude
             data_to_print["timeSequence"].append(timestamp)
 
-        print("***** THE output *****")
+        print("***** GPS Day Log *****")
         print(data_to_print)
-        print("***** THE output *****")
+        print("***** GPS Day Log *****")

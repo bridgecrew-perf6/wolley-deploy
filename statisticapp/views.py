@@ -179,13 +179,16 @@ class DummyBadgeRequestView(APIView):
                     }
                 ]
             },
-            "badges": [
-                {
-                    "title": "이 주의 먹방왕!",
-                    "description": "식사를 많이 한 당신! 맛있는 것을 먹으며 스트레스를 마구 풀어보세요!",
-                    "sector": "식사"
-                }
-            ]
+            "badges": []
         }
+        badge_objs = Badge.objects.all()
+        dummy_data["badges"] = [
+            {
+                "title": badge_obj.title,
+                "description": badge_obj.description,
+                "sector": badge_obj.sector
+            } for badge_obj in badge_objs
+        ]
+
         content = make_response_content("성공", dummy_data)
         return Response(content, status=status.HTTP_200_OK)

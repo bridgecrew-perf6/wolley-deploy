@@ -28,20 +28,25 @@ class BadgeRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # update_something()
 
         request_user = request.headers['user']
-        request_date = request.headers['date']
         try:
             user = AppUser.objects.get(user__username=request_user)
         except AppUser.DoesNotExist:
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        year, week_order, _ = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').isocalendar()
-        month_order = datetime.strptime(request_date, '%Y-%m-%d %H:%M:%S').month
+        today = datetime.today()
+        _, _, day_order = today.isocalendar()
 
-        user_week_info_obj = WeekInfo.objects.get(user=user, year=year, month_order=month_order, week_order=week_order)
+        target_date = today - timedelta(days=day_order)
+        year, week_order, _ = target_date.isocalendar()
+        month_order = target_date.month
+        try:
+            user_week_info_obj = WeekInfo.objects.get(user=user, year=year, month_order=month_order, week_order=week_order)
+        except WeekInfo.DoesNotExist:
+            content = make_response_content("week info 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         user_week_category_info_objs = WeekCategoryInfo.objects.filter(week_info=user_week_info_obj).exclude(percent=0).order_by('rank')
         sector_sort = [

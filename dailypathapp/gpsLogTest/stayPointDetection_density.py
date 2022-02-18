@@ -140,6 +140,7 @@ def parseGeoTxt2(lines):
         time_str = coarse_list[-1]
         timestamp = f"{date_str},{time_str}"
         points.append(Point(latitude, longitude, timestamp, 0, 0))
+    points.sort(key=lambda x: x.dateTime)
     return points
 
 
@@ -156,7 +157,7 @@ def main():
                 gpsfile = os.path.join(dirname, filename)
                 print("processing:", gpsfile)
                 log = open(gpsfile, 'r')
-                lines = log.readlines()[6:]  # first 6 lines are useless
+                lines = log.readlines()[6:] if filename.endswith('plt') else log.readlines()  # first 6 lines are useless
                 points = parseGeoTxt(lines) if filename.endswith('plt') else parseGeoTxt2(lines)
                 stayPointCenter, stayPoint = stayPointExtraction(points)
                 addPoints(mapDots, points, "black")
@@ -171,6 +172,7 @@ def main():
                         spfile = gpsfile.replace('Data', 'StayPoint').replace('.plt', '_density.plt')
                     elif filename.endswith('txt'):
                         spfile = gpsfile.replace('Data', 'StayPoint').replace('.txt', '_density.txt')
+
                     if not os.path.exists(os.path.dirname(spfile)):
                         os.makedirs(os.path.dirname(spfile))
                     spfile_handle = open(spfile, 'w+')

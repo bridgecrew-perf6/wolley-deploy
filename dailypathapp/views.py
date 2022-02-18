@@ -557,3 +557,34 @@ class YearlyRequestView(APIView):
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class DateListRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            request_date = request.headers['date']
+            year, month, _ = map(int,request_date.split('-'))
+        except:
+            year = datetime.today().year
+            month = datetime.today().month
+
+        data = {
+            "dateList": []
+        }
+
+        daily_path_objs = DailyPath.objects.filter(user=user, date__year=year, date__month=month).order_by('date')
+        for daily_path_obj in daily_path_objs:
+            data["dateList"].append(daily_path_obj.date)
+
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)

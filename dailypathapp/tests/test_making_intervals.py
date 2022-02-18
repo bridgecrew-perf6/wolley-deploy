@@ -65,6 +65,7 @@ class TestClass(APITestCase):
         )
 
         print("\n********** (뭉텅이) RESULT ************")
+        print(data_to_send)
         print(f"IntervalStay: {len(IntervalStay.objects.all())} 개")
         print(f"IntervalMove: {len(IntervalMove.objects.all())} 개")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

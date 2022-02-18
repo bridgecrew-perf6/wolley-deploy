@@ -145,21 +145,18 @@ class TopicRequestView(APIView):
         estimate_objs = Estimate.objects.filter(user=user)
 
         data = {
-            "topic": "추천 내용이 없습니다."
+            "topic": "오늘의 감정을 일기에 적어보는 건 어떠신가요?"
         }
-        for interval_stay_obj in interval_stay_objs:
-            for estimate_obj in estimate_objs:
-                d = get_distance(
-                    interval_stay_obj.latitude,
-                    interval_stay_obj.longitude,
-                    estimate_obj.latitude,
-                    estimate_obj.longitude
-                )
-                # if d > 200:
 
-
-
-
+        # for interval_stay_obj in interval_stay_objs:
+        #     for estimate_obj in estimate_objs:
+        #         d = get_distance(
+        #             interval_stay_obj.latitude,
+        #             interval_stay_obj.longitude,
+        #             estimate_obj.latitude,
+        #             estimate_obj.longitude
+        #         )
+        #         # if d > 200:
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

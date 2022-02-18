@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'recommendationapp',
-    'statisticapp',
+    'statisticapp.apps.StatisticappConfig',
 
     # for TestTable
     'testapp',
@@ -49,6 +49,12 @@ INSTALLED_APPS = [
 
     # CORS error 처리
     'corsheaders',
+
+    # 배치 처리
+    'django_apscheduler',
+
+    # script 실행
+    'django_extensions',
 ]
 
 
@@ -161,3 +167,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 배치 처리
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Default
+
+SCHEDULER_DEFAULT = True

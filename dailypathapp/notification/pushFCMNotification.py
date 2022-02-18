@@ -25,6 +25,7 @@ def send_to_firebase_cloud_messaging(registration_token):
             aps=messaging.Aps(content_available=True)  # individual needs in the background notification part
         )
     )
+
     message = messaging.Message(
         # silent noti를 원한다면, 아래 notification 부분을 주석처리 하면 된다.
         notification=messaging.Notification(
@@ -42,16 +43,17 @@ def send_to_firebase_cloud_messaging(registration_token):
 
 def send_to_firebase_cloud_group_messaging(registration_tokens):
     # See documentation on defining a message payload.
+
     apns = messaging.APNSConfig(
         payload=messaging.APNSPayload(
-            aps=messaging.Aps(content_available=True)  # individual needs in the background notification part
+            aps=messaging.Aps(content_available=True, thread_id='path-daily')  # individual needs in the background notification part
         )
     )
     message = messaging.MulticastMessage(
         # silent noti를 원한다면, 아래 notification 부분을 주석처리 하면 된다.
         notification=messaging.Notification(
             title='(test) title 입니다.',
-            body='(test) u r so pretty girl~',
+            body='(test) u r so sharp boy~',
         ),
         apns=apns,
         tokens=registration_tokens,
@@ -64,7 +66,8 @@ if __name__ == "__main__":
     init_app()
 
     print(datetime.datetime.today())
-    tokens = [token_alpha, token_ella]
+    token_sabre = "cLz5Oj_nREgbll4N54_HHA:APA91bFNmdgTHUzUTCW4mEI2emofT2Ny7M1d6Tbpqz7PSOLC1MgNAj8c-JMdixsMlpVoHw3Zz5GpQ5Do4853b82dwAxhB90MluBjxZRrs7DkWfLI6BdeLAGwPT1as2QBr7rG3VDNIjS4"
+    tokens = [token_alpha, token_sabre]
 
     # for tok in tokens:
     #     send_to_firebase_cloud_messaging(tok)

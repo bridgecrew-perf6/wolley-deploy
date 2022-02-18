@@ -24,4 +24,5 @@ urlpatterns = [
     # path('', include("placeapp.urls")),
     path('', include("diaryapp.urls")),
     path('', include("recommendationapp.urls")),
+    path('', include("statisticapp.urls")),
 ]

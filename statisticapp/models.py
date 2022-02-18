@@ -61,8 +61,10 @@ class WeekCategoryInfo(models.Model):
     week_info = models.ForeignKey(WeekInfo, on_delete=models.CASCADE, related_name="weekcategoryinfos")
 
     name = models.CharField(max_length=70)
+    date = models.DateTimeField(default=datetime.datetime.today)
     time_spent = models.DurationField(default=datetime.timedelta(minutes=20))
     percent = models.FloatField(default=0.0)
+    rank = models.FloatField(default=0.0)
 
     date_created = models.DateTimeField(auto_now_add=True)  # auto_now_add는 최초 저장(insert) 시에만 현재 날짜(date.today()) 를 적용
     last_updated = models.DateTimeField(auto_now=True)  # auto_now는 django model이 save 될 때마다 현재날짜(date.today()) 로 갱신
@@ -72,3 +74,24 @@ class WeekCategoryInfo(models.Model):
 
     def __str__(self):
         return f'{self.week_info} -> (weekcategoryinfo_id : {self.id}, name: {self.name})'
+
+
+class Badge(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column="badge_id")
+    week_info = models.ManyToManyField(WeekInfo, related_name="badges")
+
+    title = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+    sector = models.CharField(max_length=100)
+
+    lower_bound = models.FloatField(default=0.0)
+    upper_bound = models.FloatField(default=0.0)
+
+    date_created = models.DateTimeField(auto_now_add=True)  # auto_now_add는 최초 저장(insert) 시에만 현재 날짜(date.today()) 를 적용
+    last_updated = models.DateTimeField(auto_now=True)  # auto_now는 django model이 save 될 때마다 현재날짜(date.today()) 로 갱신
+
+    class Meta:
+        db_table = 'badge'
+
+    def __str__(self):
+        return f'(badge_id : {self.id}, name: {self.title})'

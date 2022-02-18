@@ -27,7 +27,7 @@ def mk_timestamp(coarse_list, app_user):
     return latitude, longitude, datetime_obj, daily_path
 
 
-# python manage.py runscript -v2 mkDummyGPSLogs --script-args 265EDE33-9FAE-45DE-B51D-879B487BA198
+# python manage.py runscript -v2 mkDummyGPSLogs --script-args 04433F52-57FB-4498-BBE7-DA6847B1613D
 def run(uuid):
     # mk user
     if len(User.objects.filter(username=uuid)) == 0:

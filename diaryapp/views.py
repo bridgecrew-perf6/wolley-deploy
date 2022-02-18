@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -8,8 +8,9 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from accountapp.models import AppUser
+from accountapp.models import AppUser, Estimate
 from dailypathapp.models import DailyPath
+from dailypathapp.utils import get_distance
 from diaryapp.models import Diary
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content, check_daily_path_obj
@@ -109,3 +110,53 @@ class DiaryRequestView(APIView):
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        request_date = request.headers['date']
+
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+
+        base_date = datetime.strptime(request_date, "%Y-%m-%d")
+        _, _, day_order = base_date.isocalendar()
+        target_date = base_date - timedelta(days=day_order)
+        year, week, _ = target_date.isocalendar()
+
+        start_date = datetime.fromisocalendar(year, week, 1)
+        end_date = datetime.fromisocalendar(year, week, 7)
+
+        try:
+            daily_path_obj = DailyPath.objects.get(user=user, date=base_date)
+        except DailyPath.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj)
+        estimate_objs = Estimate.objects.filter(user=user)
+
+        data = {
+            "topic": "오늘의 감정을 일기에 적어보는 건 어떠신가요?"
+        }
+
+        # for interval_stay_obj in interval_stay_objs:
+        #     for estimate_obj in estimate_objs:
+        #         d = get_distance(
+        #             interval_stay_obj.latitude,
+        #             interval_stay_obj.longitude,
+        #             estimate_obj.latitude,
+        #             estimate_obj.longitude
+        #         )
+        #         # if d > 200:
+
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)

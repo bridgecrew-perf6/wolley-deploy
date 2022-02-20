@@ -2,7 +2,7 @@ from notificationapp.FCM import *
 
 import datetime
 
-# from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from accountapp.models import AppUser
@@ -20,8 +20,8 @@ def start_save_location_noti():
     app_users = AppUser.objects.exclude(fcmToken="abc")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
-    scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
-    scheduler.add_job(func_to_schedule, 'cron', minute='30, 55',
+    scheduler = BlockingScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
+    scheduler.add_job(func_to_schedule, 'cron', minute='5, 30',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     scheduler.start()

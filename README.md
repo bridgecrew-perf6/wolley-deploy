@@ -21,7 +21,7 @@
 - Run a virtual environment
 
   ```shell
-  (myvenv) ~/server$ source myvenv\Scripts\activate
+  (myvenv) ~/wolley-deploy$ source myvenv\Scripts\activate
   ```
 
 - Install requirements
@@ -43,15 +43,16 @@
 ## Usage
 
 ```
-(myvenv) ~/server$ python manage.py makemigrations
-(myvenv) ~/server$ python manage.py migrate
+(myvenv) ~/wolley-deploy$ python manage.py makemigrations
+(myvenv) ~/wolley-deploy$ python manage.py migrate
 ```
 
 ```shell
-(myvenv) ~/server$ python manage.py runserver
+(myvenv) ~/wolley-deploy$ python manage.py runserver
 ```
 
 
 
 ## Service imgs
 
+![PJ_SUMMARY](./PJ_SUMMARY.png)

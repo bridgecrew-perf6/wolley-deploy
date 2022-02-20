@@ -38,3 +38,5 @@ DATABASES = {
         "OPTIONS": {"charset": "utf8mb4"},
     }
 }
+
+ALLOWED_HOSTS = ['34.97.203.84', ]

@@ -20,7 +20,7 @@ class NotificationappConfig(AppConfig):
         init_app()
 
         # pathDailyNoti.start_path_daily_noti()
-        # saveLocationNoti.start_save_location_noti()
+        saveLocationNoti.start_save_location_noti()
 
         from testapp.models import TestTable
         TestTable.objects.create(textfield="Notificationapp 가 정상 작동")

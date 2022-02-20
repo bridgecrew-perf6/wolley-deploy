@@ -53,3 +53,10 @@ def send_to_firebase_cloud_group_messaging(registration_tokens, is_silent, msg_t
         )
     response = messaging.send_multicast(message)
     print(f"{response.success_count} messages were sent successfully.")
+
+
+def func_to_schedule(appuser_tokens, is_silent, msg_type, msg_title, msg_body):
+    try:
+        send_to_firebase_cloud_group_messaging(appuser_tokens, is_silent, msg_type, msg_title, msg_body)
+    except:
+        print("There are no tokens")

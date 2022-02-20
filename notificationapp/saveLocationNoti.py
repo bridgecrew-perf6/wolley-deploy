@@ -17,12 +17,12 @@ noti 시각 : 매일 30분에 한 번씩
 
 
 def start_save_location_noti():
-    app_users = AppUser.objects.exclude(fcmToken="abc")
+    app_users = AppUser.objects.exclude(fcmToken="abc").exclude(fcmToken="")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul")
     scheduler.start()
-    scheduler.add_job(func_to_schedule, 'cron', minute='5, 55',
+    scheduler.add_job(func_to_schedule, 'cron', hour='*', minute='0, 5',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     from testapp.models import TestTable

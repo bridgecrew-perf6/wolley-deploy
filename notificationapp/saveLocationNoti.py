@@ -17,8 +17,8 @@ noti 시각 : 매일 30분에 한 번씩
 
 
 def start_save_location_noti():
-    app_users = AppUser.objects.filter(FCM_token="abc")
-    appuser_tokens = [app_user.FCM_token for app_user in app_users]
+    app_users = AppUser.objects.filter(fcmToken="abc")
+    appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
     scheduler.add_job(func_to_schedule, 'cron', minute='0, 30',

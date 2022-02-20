@@ -23,4 +23,5 @@ class NotificationappConfig(AppConfig):
         saveLocationNoti.start_save_location_noti()
 
         from testapp.models import TestTable
-        TestTable.objects.create(textfield="Notificationapp 가 정상 작동")
+        import datetime
+        TestTable.objects.create(textfield=f"{datetime.datetime.now()}, ready 가 정상 작동 in apps")

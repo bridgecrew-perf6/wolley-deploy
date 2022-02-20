@@ -20,12 +20,11 @@ def start_save_location_noti():
     app_users = AppUser.objects.exclude(fcmToken="abc")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
-    print(appuser_tokens)
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
-    scheduler.add_job(func_to_schedule, 'cron', minute='30, 45',
+    scheduler.add_job(func_to_schedule, 'cron', minute='30, 55',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     scheduler.start()
     from testapp.models import TestTable
-    TestTable.objects.create(textfield=f"{appuser_tokens}, start_save_location_noti 성공~!!!!!!!")
-    print(f"{datetime.datetime.now()}: start_save_location_noti 성공!!!!!!!!!!!!!!!!!!")
+    TestTable.objects.create(textfield=f"{datetime.datetime.now()}, start가 정상 작동")
+    print(f"{datetime.datetime.now()}: start가 정상 작동")

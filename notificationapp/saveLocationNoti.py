@@ -26,7 +26,7 @@ def start_saveLocation():
     scheduler.add_jobstore(DjangoJobStore(), 'djangojobstore')
 
     scheduler.start()
-    scheduler.add_job(func_to_schedule, 'cron', minute='0, 31',
+    scheduler.add_job(func_to_schedule, 'cron', minute='0, 46',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     from testapp.models import TestTable

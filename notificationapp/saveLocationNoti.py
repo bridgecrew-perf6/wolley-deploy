@@ -21,7 +21,7 @@ def start_saveLocation():
     app_users = AppUser.objects.exclude(fcmToken="abc").exclude(fcmToken="")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
-    scheduler = BlockingScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
+    scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
 
     scheduler.add_job(func_to_schedule, 'cron', minute='0, 30',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
@@ -30,4 +30,5 @@ def start_saveLocation():
     TestTable.objects.create(textfield=f"{datetime.datetime.now()}, start가 정상 작동")
     print(f"{datetime.datetime.now()}: start가 정상 작동")
     print(appuser_tokens)
+
     scheduler.start()

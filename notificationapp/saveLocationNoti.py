@@ -22,7 +22,7 @@ def start_save_location_noti():
 
     print(appuser_tokens)
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
-    scheduler.add_job(func_to_schedule, 'cron', minute='25, 30',
+    scheduler.add_job(func_to_schedule, 'cron', minute='30, 40',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     scheduler.start()

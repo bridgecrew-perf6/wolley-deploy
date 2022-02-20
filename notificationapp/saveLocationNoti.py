@@ -4,7 +4,7 @@ import datetime
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
-from django_apscheduler.jobstores import register_events, DjangoJobStore
+from django_apscheduler.jobstores import DjangoJobStore
 
 from accountapp.models import AppUser
 
@@ -21,12 +21,10 @@ def start_saveLocation():
     app_users = AppUser.objects.exclude(fcmToken="abc").exclude(fcmToken="")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
-    scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
-
-    scheduler.add_jobstore(DjangoJobStore(), 'djangojobstore')
+    scheduler = BlockingScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
 
     scheduler.start()
-    scheduler.add_job(func_to_schedule, 'cron', minute='0, 46',
+    scheduler.add_job(func_to_schedule, 'cron', minute='0, 30',
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     from testapp.models import TestTable

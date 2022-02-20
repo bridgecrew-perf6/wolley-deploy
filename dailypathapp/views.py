@@ -200,6 +200,7 @@ class PathDailyRequestView(APIView):
             user.save()
 
         app_user, _ = AppUser.objects.get_or_create(user=user)
+        app_user.FCM_token = request.data["fcmToken"]
         request_time_sequence = request.data['timeSequence']
         date_sequence = make_date_sequence(request_time_sequence, app_user)
 

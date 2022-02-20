@@ -15,8 +15,8 @@ noti 시각 : 일->월 넘어가는 00:10:00
 
 
 def start_path_daily_noti():
-    app_users = AppUser.objects.exclude(fcmToken="abc")
-    appuser_tokens = [app_user.fcmToken for app_user in app_users]
+    app_users = AppUser.objects.exclude(FCM_token="abc")
+    appuser_tokens = [app_user.FCM_token for app_user in app_users]
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
     scheduler.add_job(func_to_schedule, 'cron', day_of_week='mon', hour=0, minute=10,

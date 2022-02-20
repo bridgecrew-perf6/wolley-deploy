@@ -10,6 +10,7 @@ class AppUser(models.Model):
         primary_key=True,
         related_name='app_user'
     )  # user_id, related_name default : appuser
+    FCM_token = models.CharField(max_length=100, default=None)
 
     class Meta:
         db_table = "app_user"

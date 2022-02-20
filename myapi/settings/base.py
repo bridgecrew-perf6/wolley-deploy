@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'intervalapp',
     'recommendationapp',
     'statisticapp.apps.StatisticappConfig',
+    'notificationapp.apps.NotificationappConfig',
 
     # for TestTable
     'testapp',

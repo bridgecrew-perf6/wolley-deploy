@@ -45,6 +45,7 @@ class IntervalRequestView(APIView):
             user=app_user_obj,
             category=request.data["category"],
             location=request.data["location"],
+            location_id=request.data["locationId"],
             latitude=request.data["coordinates"]["latitude"],
             longitude=request.data["coordinates"]["longitude"]
         )

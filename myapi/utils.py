@@ -77,7 +77,6 @@ def make_interval_stay_to_data(interval_obj: IntervalStay) -> Dict:
         "id": interval_obj.id,
         "category": interval_obj.category,
         "location": interval_obj.location,
-        "locationId": interval_obj.location_id,
         "address": interval_obj.address,
         "coordinates": {
             "latitude": interval_obj.latitude,

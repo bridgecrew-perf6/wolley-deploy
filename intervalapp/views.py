@@ -10,6 +10,7 @@ from accountapp.models import AppUser, Estimate
 from dailypathapp.models import DailyPath
 from dailypathapp.utils import coordinate2address, get_visited_place
 from intervalapp.models import IntervalStay
+from intervalapp.utils import search_location
 from myapi.utils import make_response_content, make_interval_stay_to_data
 
 
@@ -72,5 +73,24 @@ class IntervalRequestView(APIView):
         interval_obj.save()
 
         data = make_interval_stay_to_data(interval_obj)
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LocationRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        request_interval_id = int(request.data['intervalId'])
+        request_keyword = request.data['keyword']
+
+        try:
+            interval_stay_obj = IntervalStay.objects.get(id=request_interval_id)
+        except IntervalStay.DoesNotExist:
+            content = make_response_content("interval 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        data = search_location(request_keyword, interval_stay_obj.latitude, interval_stay_obj.longitude)
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

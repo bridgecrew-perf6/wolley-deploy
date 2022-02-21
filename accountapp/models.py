@@ -25,7 +25,7 @@ class Estimate(models.Model):
 
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
-    location_id = models.BigIntegerField(default=0)
+
     latitude = models.FloatField(default=0.0)
     longitude = models.FloatField(default=0.0)
 

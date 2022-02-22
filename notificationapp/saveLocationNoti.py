@@ -29,10 +29,10 @@ def start_saveLocation():
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
 
-    scheduler.add_job(func_to_schedule, 'interval', minutes=30,
+    scheduler.add_job(func_to_schedule, 'cron', minute="*/30",
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
-    scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())
+    # scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())
     # scheduler.get_jobs()[0].modify(next_run_time=datetime.datetime.now())
 
     from testapp.models import TestTable

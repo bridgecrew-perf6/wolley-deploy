@@ -19,7 +19,7 @@ def start_path_daily_noti():
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
-    scheduler.add_job(func_to_schedule, 'cron', day_of_week='tue', hour=19, minute=15,
+    scheduler.add_job(func_to_schedule, 'cron', day_of_week='tue', hour=19, minute=30,
                       args=[appuser_tokens, False, "pathDaily", "From Wolley 🗓", "일주일 동안의 기록을 확인해보세요!"])
 
     scheduler.start()

@@ -572,9 +572,10 @@ class PathListRequestView(APIView):
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
+
         try:
             request_date = request.headers['date']
-            year, month, _ = map(int,request_date.split('-'))
+            year, month = map(int, request_date.split('-'))
         except:
             year = datetime.today().year
             month = datetime.today().month

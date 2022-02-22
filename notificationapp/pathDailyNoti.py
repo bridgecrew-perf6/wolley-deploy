@@ -15,11 +15,11 @@ noti 시각 : 일->월 넘어가는 00:10:00
 
 
 def start_path_daily_noti():
-    app_users = AppUser.objects.exclude(fcmToken="abc")
+    app_users = AppUser.objects.exclude(fcmToken="abc").exclude(fcmToken="")
     appuser_tokens = [app_user.fcmToken for app_user in app_users]
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={"max_instance": 1})
-    scheduler.add_job(func_to_schedule, 'cron', day_of_week='tue', hour=18, minute=50,
+    scheduler.add_job(func_to_schedule, 'cron', day_of_week='tue', hour=19, minute=00,
                       args=[appuser_tokens, False, "pathDaily", "From Wolley 🗓", "일주일 동안의 기록을 확인해보세요!"])
 
     scheduler.start()

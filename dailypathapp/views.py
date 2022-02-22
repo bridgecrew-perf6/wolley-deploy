@@ -561,7 +561,7 @@ class YearlyRequestView(APIView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class DateListRequestView(APIView):
+class PathListRequestView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):

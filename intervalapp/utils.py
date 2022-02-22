@@ -5,7 +5,7 @@ import json
 from myapi.settings.__init__ import *
 
 
-def make_coordiantes_range(latitude: float, longitude: float, diff = 0.01):
+def make_coordinates_range(latitude: float, longitude: float, diff = 0.01):
     base_lat = round(latitude, 2)
     base_lon = round(longitude, 2)
 
@@ -24,7 +24,7 @@ def make_coordinates_distance(base_lon, base_lat, place_x, place_y):
 def search_location(keyword: str, latitude: float, longitude: float):
     base_url = f"https://dapi.kakao.com/v2/local/search/keyword.json"
 
-    start_lon, start_lat, end_lon, end_lat = make_coordiantes_range(latitude, longitude, diff=0.005)
+    start_lon, start_lat, end_lon, end_lat = make_coordinates_range(latitude, longitude, diff=0.005)
 
     params = {'query': keyword, 'rect': f'{start_lon},{start_lat},{end_lon},{end_lat}'}
     rest_api_key = MY_REST_API_KEY

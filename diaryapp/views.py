@@ -11,30 +11,12 @@ from django.utils.decorators import method_decorator
 from django.db.models import Max, Min, Q
 
 
-from accountapp.models import AppUser, Estimate
+from accountapp.models import AppUser
 from dailypathapp.models import DailyPath, GPSLog
 from diaryapp.models import Diary
+from diaryapp.utils import make_topic, make_diary_content
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content
-
-def make_diary_content(start: datetime, end: datetime, category: str) -> str:
-    hours, remainder = divmod((end - start).seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    if minutes == 0:
-        time_spent = f'{hours}시간'
-    else:
-        time_spent = f'{hours}시간 {minutes}분'
-
-    if category == "집":
-        return f'{start.hour}시 {start.minute}분부터 {time_spent}동안 {category}에 있었다.'
-    elif category == "식사":
-        return f'{start.hour}시 {start.minute}분에 {category}를 했다.'
-    elif category in ["회사", "학교", "카페", "병원", "모임"]:
-        return f'{start.hour}시 {start.minute}분에 {category}에 도착하여 {time_spent}동안 있었다.'
-    elif category in ["운동", "쇼핑"]:
-        return f'{start.hour}시 {start.minute}분에 {category}을 시작하여 {time_spent}동안 {category}을 했다.'
-    else:
-        return ''
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -112,12 +94,6 @@ class DiaryRequestView(APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
-def make_topic(start_time: datetime, category: str, location: str):
-    if location == '?':
-        return f"{start_time.hour}시 {start_time.minute}분의 {category}에 대해 써보세요"
-    else:
-        return f"{start_time.hour}시 {start_time.minute}분에 갔던 {location}에 대해 써보세요"
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TopicRequestView(APIView):
@@ -132,7 +108,6 @@ class TopicRequestView(APIView):
         except AppUser.DoesNotExist:
             content = make_response_content("user 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
 
         base_date = datetime.strptime(request_date, "%Y-%m-%d")
         _, _, day_order = base_date.isocalendar()

@@ -66,7 +66,7 @@ if __name__ == "__main__":
     init_app()
 
     print(datetime.datetime.today())
-    token_ella_boy_friend = "fCppHM5uQUYyt5Z3grySxQ:APA91bECaI7d5B2py8tNWbAv8LLl7zB9CGBtIimxTpR2osX7w9DmvE0VHKWu8UxVMBhc400qi6f_ViDpjIJZ9oMVGat0gkOGQ2P5ET_8YzSCMgOrlrC0hkpZFBW-ONfGUP3-PrzPF13_"
+    token_ella_boy_friend = "e6BKoOJAAUb_oE7NiYCwmG:APA91bGSZJfrgsRHLhdF-DVaQaQ78_-4e7X0H3-BVvxBBZtSXUna1PSv4iqkqlJjuGQtZhM5SH7LqYTXtOKDgVLAM4LZO0S9bqCKv2ltQu23EsP4cH8C0xgXsjoD3lq7UsKszCzAZV11"
     tokens = [token_alpha, token_ella_boy_friend]
 
     # for tok in tokens:

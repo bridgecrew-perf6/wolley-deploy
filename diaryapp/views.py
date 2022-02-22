@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+import random
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -7,14 +8,14 @@ from rest_framework import status
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.db.models import Max, Min, Q
+
 
 from accountapp.models import AppUser, Estimate
-from dailypathapp.models import DailyPath
-from dailypathapp.utils import get_distance
+from dailypathapp.models import DailyPath, GPSLog
 from diaryapp.models import Diary
 from intervalapp.models import IntervalStay
-from myapi.utils import make_response_content, check_daily_path_obj
-
+from myapi.utils import make_response_content
 
 def make_diary_content(start: datetime, end: datetime, category: str) -> str:
     hours, remainder = divmod((end - start).seconds, 3600)
@@ -111,6 +112,12 @@ class DiaryRequestView(APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
+def make_topic(start_time: datetime, category: str, location: str):
+    if location == '?':
+        return f"{start_time.hour}시 {start_time.minute}분의 {category}에 대해 써보세요"
+    else:
+        return f"{start_time.hour}시 {start_time.minute}분에 갔던 {location}에 대해 써보세요"
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TopicRequestView(APIView):
@@ -134,29 +141,45 @@ class TopicRequestView(APIView):
 
         start_date = datetime.fromisocalendar(year, week, 1)
         end_date = datetime.fromisocalendar(year, week, 7)
+        topics = ["오늘의 감정을 일기에 적어보는 건 어떠신가요?"]
+
+        try:
+            daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])
+            gps_stat = GPSLog.objects.filter(daily_path__in=daily_path_objs).aggregate(
+                min_lat=Min('latitude'),
+                max_lat=Max('latitude'),
+                min_lon=Min('longitude'),
+                max_lon=Max('longitude')
+            )
+        except:
+            content = make_response_content("위도 경도 계산 오류", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        print(gps_stat)
 
         try:
             daily_path_obj = DailyPath.objects.get(user=user, date=base_date)
         except DailyPath.DoesNotExist:
-            content = make_response_content("user 없음", {})
+            content = make_response_content("daily path 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj)
-        estimate_objs = Estimate.objects.filter(user=user)
+        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj).exclude(
+            Q(latitude__range=[gps_stat['min_lat'], gps_stat['max_lat']])|
+            Q(longitude__range=[gps_stat['min_lon'], gps_stat['max_lon']])
+        )
+
+        for interval_stay_obj in interval_stay_objs:
+            topics.append(
+                make_topic(
+                    interval_stay_obj.start_time,
+                    interval_stay_obj.category,
+                    interval_stay_obj.location
+                )
+            )
 
         data = {
-            "topic": "오늘의 감정을 일기에 적어보는 건 어떠신가요?"
+            "topic": random.choice(topics)
         }
-
-        # for interval_stay_obj in interval_stay_objs:
-        #     for estimate_obj in estimate_objs:
-        #         d = get_distance(
-        #             interval_stay_obj.latitude,
-        #             interval_stay_obj.longitude,
-        #             estimate_obj.latitude,
-        #             estimate_obj.longitude
-        #         )
-        #         # if d > 200:
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

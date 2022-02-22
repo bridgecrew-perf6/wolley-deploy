@@ -10,6 +10,7 @@ class AppUser(models.Model):
         primary_key=True,
         related_name='app_user'
     )  # user_id, related_name default : appuser
+    fcmToken = models.CharField(max_length=200, default="abc", null=True, blank=True)
 
     class Meta:
         db_table = "app_user"
@@ -24,7 +25,7 @@ class Estimate(models.Model):
 
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
-
+    location_id = models.BigIntegerField(default=0)
     latitude = models.FloatField(default=0.0)
     longitude = models.FloatField(default=0.0)
 

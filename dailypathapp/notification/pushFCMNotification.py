@@ -52,8 +52,8 @@ def send_to_firebase_cloud_group_messaging(registration_tokens):
     message = messaging.MulticastMessage(
         # silent noti를 원한다면, 아래 notification 부분을 주석처리 하면 된다.
         notification=messaging.Notification(
-            # title='saveLocation 통신',
-            # body='saveLocation 통신',
+            title='test 통신',
+            body='test 통신',
         ),
         apns=apns,
         tokens=registration_tokens,

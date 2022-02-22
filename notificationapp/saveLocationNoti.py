@@ -16,10 +16,11 @@ noti 시각 : 매일 30분에 한 번씩
 """
 
 
-# def get_nearest_half_hour():
-#     now_minute = datetime.datetime.now().minute
-#     delta = (30 - now_minute) % 30
-#     return datetime.datetime.now() + datetime.timedelta(minutes=delta)
+def get_nearest_half_hour():
+    now_minute = datetime.datetime.now().minute
+    now_second = datetime.datetime.now().second
+    delta = (30 - now_minute) % 30
+    return datetime.datetime.now() + datetime.timedelta(minutes=delta) - datetime.timedelta(seconds=now_second)
 
 
 def start_saveLocation():
@@ -31,8 +32,8 @@ def start_saveLocation():
     scheduler.add_job(func_to_schedule, 'interval', minutes=3,
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
-    # scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())
-    scheduler.get_jobs()[0].modify(next_run_time=datetime.datetime.now())
+    scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())
+    # scheduler.get_jobs()[0].modify(next_run_time=datetime.datetime.now())
 
     from testapp.models import TestTable
     TestTable.objects.create(textfield=f"{datetime.datetime.now()}, start가 정상 작동")

@@ -19,7 +19,7 @@ noti 시각 : 매일 30분에 한 번씩
 def get_nearest_half_hour():
     now_minute = datetime.datetime.now().minute
     delta = (30 - now_minute) % 30
-    return datetime.datetime.now() + datetime.timedelta(minutes=delta) - datetime.timedelta(minutes=9)
+    return datetime.datetime.now() + datetime.timedelta(minutes=delta) - datetime.timedelta(minutes=4)
 
 
 def start_saveLocation():

@@ -19,7 +19,7 @@ noti 시각 : 매일 30분에 한 번씩
 def get_nearest_half_hour():
     now_minute = datetime.datetime.now().minute
     delta = (30 - now_minute) % 30
-    return datetime.datetime.now() + datetime.timedelta(minutes=delta) - datetime.timedelta(minutes=4)
+    return datetime.datetime.now() + datetime.timedelta(minutes=delta)
 
 
 def start_saveLocation():
@@ -28,7 +28,7 @@ def start_saveLocation():
 
     scheduler = BackgroundScheduler(timezone="Asia/Seoul", job_defaults={'max_instances': 1})
 
-    scheduler.add_job(func_to_schedule, 'interval', minutes=30,
+    scheduler.add_job(func_to_schedule, 'interval', minutes=5,
                       args=[appuser_tokens, False, "saveLocation", "saveLocation 통신", "saveLocation 통신"])
 
     scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())

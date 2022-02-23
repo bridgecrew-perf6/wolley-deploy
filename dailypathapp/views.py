@@ -108,7 +108,7 @@ def make_percent(start: datetime, end: datetime) -> float:
     return percent
 
 
-def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
+def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List) -> None:
     # print("Interval Stay")
     for point in stay_point_centers:
         start_time = datetime.strptime(point.arriveTime, DATETIME_FORMAT)
@@ -249,6 +249,58 @@ class PathDailyRequestView(APIView):
             make_move_interval(app_user, daily_path, move_points)
             # print("daily path 하나 성공")
 
+        content = make_response_content("성공", {})
+        return Response(content, status=status.HTTP_200_OK)
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PathPastRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        request_user = request.data['user']
+        request_date = request.data['date']
+        request_time_sequence = request.data['timeSequence']
+
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_path_obj = DailyPath.objects.create(
+            user=user,
+            date=request_date
+        )
+
+        if not request_time_sequence:
+            content = make_response_content("time sequence 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        #
+        # stay_points = []
+        # for idx, data in enumerate(request_time_sequence):
+        #     if idx == 0:
+
+
+        # for point in stay_point_centers:
+        #     start_time = datetime.strptime(point.arriveTime, DATETIME_FORMAT)
+        #     end_time = datetime.strptime(point.leaveTime, DATETIME_FORMAT)
+        #     percent = make_percent(start_time, end_time)
+        #     latitude = point.latitude
+        #     longitude = point.longitude
+        #     address = coordinate2address(point.latitude, point.longitude)
+        #     IntervalStay.objects.create(
+        #         daily_path=daily_path,
+        #         start_time=start_time,
+        #         end_time=end_time,
+        #         address=address,
+        #         category=get_visited_place(latitude, longitude, app_user),
+        #         location="?",
+        #         latitude=latitude,
+        #         longitude=longitude,
+        #         percent=percent
+        #     )
         content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)
 

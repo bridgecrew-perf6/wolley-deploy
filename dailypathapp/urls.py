@@ -1,12 +1,13 @@
 from django.urls import path
 from .views import PathDailyRequestView, MonthlyRequestView, PieChartRequestView, MapRequestView, MapLogRequestView, \
-    WeeklyRequestView, YearlyRequestView, PathListRequestView
+    WeeklyRequestView, YearlyRequestView, PathListRequestView, PathPastRequestView
 
 app_name = "dailypathapp"
 
 urlpatterns = [
     path('path/daily/', PathDailyRequestView.as_view(), name="pathdaily_request"),
     path('path/list/', PathListRequestView.as_view(), name="path_list_request"),
+    path('path/past/', PathPastRequestView.as_view(), name="path_past_request"),
 
     path('weekly/', WeeklyRequestView.as_view(), name="weekly_request"),
     path('monthly/', MonthlyRequestView.as_view(), name="monthly_request"),

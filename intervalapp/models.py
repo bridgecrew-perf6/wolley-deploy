@@ -17,7 +17,7 @@ class IntervalStay(models.Model):
 
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
-    location_id = models.BigIntegerField(default=0)
+    location_id = models.CharField(max_length=100, default="0")
 
     percent = models.FloatField(default=0.0)
 

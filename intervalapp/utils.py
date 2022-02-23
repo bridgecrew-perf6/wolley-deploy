@@ -41,8 +41,8 @@ def search_location(keyword: str, latitude: float, longitude: float):
             "id": json_data['id'],
             "place": json_data['place_name'],
             "coordinates": {
-                "longitude": json_data['x'],
-                "latitude": json_data['y']
+                "longitude": float(json_data['x']),
+                "latitude": float(json_data['y'])
             },
             "distance": make_coordinates_distance(longitude, latitude, float(json_data['x']), float(json_data['y']))
         })

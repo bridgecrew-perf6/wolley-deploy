@@ -15,13 +15,13 @@ def init_app():
 class NotificationappConfig(AppConfig):
     name = 'notificationapp'
 
-    # def ready(self):
-    #     from . import pathDailyNoti, saveLocationNoti
-    #     init_app()
-    #
-    #     from testapp.models import TestTable
-    #     import datetime
-    #     print(f"{datetime.datetime.now()}: ready가 정상 작동")
-    #     TestTable.objects.create(textfield=f"{datetime.datetime.now()}, ready 가 정상 작동 in apps")
-    #     pathDailyNoti.start_path_daily_noti()
-    #     # saveLocationNoti.start_saveLocation()
+    def ready(self):
+        from . import pathDailyNoti, saveLocationNoti
+        init_app()
+
+        from testapp.models import TestTable
+        import datetime
+        print(f"{datetime.datetime.now()}: ready가 정상 작동")
+        TestTable.objects.create(textfield=f"{datetime.datetime.now()}, ready 가 정상 작동 in apps")
+        pathDailyNoti.start_path_daily_noti()
+        # saveLocationNoti.start_saveLocation()

@@ -280,11 +280,14 @@ class PathPastRequestView(APIView):
         daily_path_obj, created = DailyPath.objects.get_or_create(
             user=user,
             date=request_date
-            # path_type="past"
         )
+
         if not created:
             content = make_response_content("이미 존재하는 daily path", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_path_obj.path_type = "past"
+        daily_path_obj.save()
 
         # print(daily_path_obj.date, daily_path_obj.path_type)
         if not request_time_sequence:

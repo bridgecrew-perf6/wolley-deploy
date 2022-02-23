@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 def make_diary_content(start: datetime, end: datetime, category: str) -> str:
-    hours, remainder = divmod((end - start).seconds, 3600)
+    hours, remainder = divmod((end - start).total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     if minutes == 0:
         time_spent = f'{hours}시간'

@@ -159,6 +159,36 @@ class BadgeRequestView(APIView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class BadgeListRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        request_user = request.headers['user']
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        badge_objs = Badge.objects.all()
+        data = {
+            "badges": []
+        }
+        for badge_obj in badge_objs:
+            data["badges"].append(
+                {
+                    "title": badge_obj.title,
+                    "description": badge_obj.description,
+                    "sector": badge_obj.sector,
+                    "count": len(badge_obj.week_info.filter(user=user))
+                }
+            )
+
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class DummyBadgeRequestView(APIView):
     permission_classes = [AllowAny]
 

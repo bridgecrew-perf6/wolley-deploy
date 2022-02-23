@@ -711,12 +711,17 @@ class PathListRequestView(APIView):
             month = datetime.today().month
 
         data = {
-            "dateList": []
+            "dateList": [],
+            "pastDateList": []
         }
 
-        daily_path_objs = DailyPath.objects.filter(user=user, date__year=year, date__month=month).order_by('date')
+        daily_path_objs = DailyPath.objects.filter(user=user, date__year=year, date__month=month, path_type="daily").order_by('date')
         for daily_path_obj in daily_path_objs:
             data["dateList"].append(daily_path_obj.date)
+
+        past_path_objs = DailyPath.objects.filter(user=user, date__year=year, date__month=month, path_type="past").order_by('date')
+        for past_path_obj in past_path_objs:
+            data["pastDateList"].append(past_path_obj.date)
 
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)

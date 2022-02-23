@@ -258,6 +258,35 @@ class PathDailyRequestView(APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
+def make_blank_percent(info_data: List) -> float:
+    blank_percent = 1.0
+    for data in info_data:
+        blank_percent -= data['percent']
+    return blank_percent
+
+
+def make_blank_interval(percent: float, return_type: str) -> Dict:
+    if return_type == "piechart":
+        blank_interval = {
+            "id": 0,
+            "category": "empty",
+            "detail": "empty",
+            "percent": percent,
+            "start": datetime.today()
+        }
+        return blank_interval
+    elif return_type == "weekly":
+        blank_interval = {
+            "id": 0,
+            "category": "empty",
+            "percent": percent,
+            "time": {
+                "start": datetime.today(),
+                "end": datetime.today()
+            }
+        }
+        return blank_interval
+
 @method_decorator(csrf_exempt, name='dispatch')
 class PieChartRequestView(APIView):
     permission_classes = [AllowAny]
@@ -288,6 +317,10 @@ class PieChartRequestView(APIView):
                 } for interval_obj in interval_move_objs
             ])
             info_data = sorted(info_data, key=lambda info: info['start'])
+            blank_percent = make_blank_percent(info_data)
+            info_data.append(
+                make_blank_interval(blank_percent, "piechart")
+            )
             content['data']['info'] = info_data
         return Response(content, status=status_code)
 
@@ -400,7 +433,6 @@ class WeeklyRequestView(APIView):
                 {
                     "id": interval_obj.id,
                     "category": "이동",
-                    "detail": interval_obj.transport,
                     "percent": interval_obj.percent,
                     "time": {
                         "start": interval_obj.start_time,
@@ -408,6 +440,10 @@ class WeeklyRequestView(APIView):
                     }
                 } for interval_obj in interval_move_objs
             ])
+            blank_percent = make_blank_percent(day_data["info"])
+            day_data["info"].append(
+                make_blank_interval(blank_percent, "weekly")
+            )
             day_data["info"] = sorted(day_data["info"], key=lambda x: x['time']['start'])
             data["days"].append(day_data)
 

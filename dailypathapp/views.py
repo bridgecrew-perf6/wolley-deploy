@@ -266,8 +266,8 @@ def make_blank_percent(info_data: List) -> float:
 def make_blank_interval(percent: float) -> Dict:
     blank_interval = {
         "id": 0,
-        "category": "empty",
-        "detail": "empty",
+        "category": "없음",
+        "detail": "없음",
         "percent": percent,
         "start": datetime.today()
     }

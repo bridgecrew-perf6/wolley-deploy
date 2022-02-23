@@ -362,34 +362,65 @@ class PieChartRequestView(APIView):
         request_user = request.headers['user']
         request_date = request.headers['date']
 
-        content, status_code, interval_stay_objs, interval_move_objs = check_interval_objs(request_user, request_date)
-        if status_code == status.HTTP_200_OK:
-            info_data = list()
-            info_data.extend([
-                {
-                    "id": interval_obj.id,
-                    "category": interval_obj.category,
-                    "detail": interval_obj.location,
-                    "percent": interval_obj.percent,
-                    "start": interval_obj.start_time
-                } for interval_obj in interval_stay_objs
-            ])
-            info_data.extend([
-                {
-                    "id": interval_obj.id,
-                    "category": "이동",
-                    "detail": interval_obj.transport,
-                    "percent": interval_obj.percent,
-                    "start": interval_obj.start_time
-                } for interval_obj in interval_move_objs
-            ])
-            info_data = sorted(info_data, key=lambda info: info['start'])
-            blank_percent = make_blank_percent(info_data)
-            info_data.append(
-                make_blank_interval(blank_percent)
-            )
-            content['data']['info'] = info_data
-        return Response(content, status=status_code)
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+            daily_path_obj = DailyPath.objects.get(user=user, date=request_date)
+            data = {
+                "id": daily_path_obj.id,
+                "date": daily_path_obj.date,
+                "info": list()
+            }
+
+        except AppUser.DoesNotExist:
+            content = make_response_content("User 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        except DailyPath.DoesNotExist:
+            content = make_response_content("Daily 기록 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj)
+        interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj)
+
+        if not interval_stay_objs and not interval_move_objs:
+            content = make_response_content("Interval 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        if daily_path_obj.path_type == "past":
+            content = make_response_content("과거 기록", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        info_data = list()
+
+        info_data.extend([
+            {
+                "id": interval_obj.id,
+                "category": interval_obj.category,
+                "detail": interval_obj.location,
+                "percent": interval_obj.percent,
+                "start": interval_obj.start_time
+            } for interval_obj in interval_stay_objs
+        ])
+
+        info_data.extend([
+            {
+                "id": interval_obj.id,
+                "category": "이동",
+                "detail": interval_obj.transport,
+                "percent": interval_obj.percent,
+                "start": interval_obj.start_time
+            } for interval_obj in interval_move_objs
+        ])
+
+        info_data = sorted(info_data, key=lambda info: info['start'])
+
+        blank_percent = make_blank_percent(info_data)
+        info_data.append(
+            make_blank_interval(blank_percent)
+        )
+        data['info'] = info_data
+
+        content = make_response_content("성공", data)
+        return Response(content, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

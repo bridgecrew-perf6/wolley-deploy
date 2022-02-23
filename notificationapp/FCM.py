@@ -1,3 +1,5 @@
+import datetime
+
 from firebase_admin import messaging
 
 
@@ -52,6 +54,7 @@ def send_to_firebase_cloud_group_messaging(registration_tokens, is_silent, msg_t
             tokens=registration_tokens,
         )
     response = messaging.send_multicast(message)
+    print(f"{datetime.datetime.now()} 에 메세지 전송 시도!! 결과는..?")
     print(f"{response.success_count} messages were sent successfully.")
 
 

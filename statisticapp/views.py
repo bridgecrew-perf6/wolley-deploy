@@ -13,17 +13,7 @@ from dailypathapp.models import DailyPath
 from intervalapp.models import IntervalStay
 from myapi.utils import make_response_content
 from statisticapp.models import WeekInfo, WeekCategoryInfo, Badge
-
-
-def make_time_spent(total_time):
-    total_seconds = int(total_time.total_seconds())
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return f"{hours}시간 {minutes}분"
-
-
-def make_date(obj_date):
-    return f'{obj_date.month}월 {obj_date.day}일'
+from statisticapp.utils import make_date, make_time_spent
 
 
 @method_decorator(csrf_exempt, name='dispatch')

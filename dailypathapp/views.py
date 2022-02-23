@@ -14,17 +14,16 @@ from django.utils.decorators import method_decorator
 from dailypathapp.stayPointDetectionDensity import generatePoints, stayPointExtraction, Point
 from dailypathapp.utils import coordinate2address, get_visited_place, get_distance
 
-from django.db.models import QuerySet
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath, GPSLog
 from intervalapp.models import IntervalStay, IntervalMove
-from myapi.utils import make_response_content, check_interval_objs, check_daily_path_objs, check_daily_path_obj
+from myapi.utils import make_response_content, check_interval_objs, check_daily_path_obj
 
 DAY = 7
 MONTH = 12
 DAY_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 CATEGORY_SORT = ["집", "회사", "학교", "식사", "카페", "쇼핑", "병원", "운동", "모임", "이동", "기타", "?"]
-
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 def make_date_range(start: str, end: str) -> List:
     date_range = []
@@ -103,24 +102,17 @@ def make_gps_logs(date_sequence: List[Dict]) -> List[Tuple]:
     return gps_logs
 
 
-def make_percent(start: str, end: str) -> float:
-    _, start_time = start.split()
-    _, end_time = end.split()
-
-    start_hour, start_min, start_sec = map(int, start_time.split(':'))
-    end_hour, end_min, end_sec = map(int, end_time.split(':'))
-
-    start_total = start_hour * 3600 + start_min * 60 + start_sec
-    end_total = end_hour * 3600 + end_min * 60 + end_sec
-
-    return round((end_total - start_total) / 86400, 2)
+def make_percent(start: datetime, end: datetime) -> float:
+    total_time = end - start
+    percent = total_time / timedelta(hours=23, minutes=59, seconds=59)
+    return percent
 
 
 def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
     # print("Interval Stay")
     for point in stay_point_centers:
-        start_time = point.arriveTime
-        end_time = point.leaveTime
+        start_time = datetime.strptime(point.arriveTime, DATETIME_FORMAT)
+        end_time = datetime.strptime(point.leaveTime, DATETIME_FORMAT)
         percent = make_percent(start_time, end_time)
         latitude = point.latitude
         longitude = point.longitude
@@ -141,11 +133,13 @@ def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_cent
 def make_move_interval(app_user: AppUser, daily_path: DailyPath, move_points: List[Tuple]) -> None:
     # print("Interval Move")
     for start_time, end_time in move_points:
-        percent = make_percent(start_time, end_time)
+        start = datetime.strptime(start_time, DATETIME_FORMAT)
+        end = datetime.strptime(end_time, DATETIME_FORMAT)
+        percent = make_percent(start, end)
         IntervalMove.objects.create(
             daily_path=daily_path,
-            start_time=start_time,
-            end_time=end_time,
+            start_time=start,
+            end_time=end,
             transport="?",
             percent=percent
         )
@@ -230,10 +224,11 @@ class PathDailyRequestView(APIView):
             # print(interval_flag, add_flag)
             if interval_flag == "move" and add_flag == "move":
                 _, end_time = move_points.pop(0)
+                end = datetime.strptime(end_time, DATETIME_FORMAT)
                 interval_move_obj.end_time = end_time
                 interval_move_obj.percent = make_percent(
-                    interval_move_obj.start_time.strftime('%Y-%m-%d %H:%M:%S'),
-                    end_time
+                    interval_move_obj.start_time,
+                    end
                 )
                 interval_move_obj.save()
             elif interval_flag == "stay" and add_flag == "stay":
@@ -256,6 +251,27 @@ class PathDailyRequestView(APIView):
 
         content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)
+
+
+def make_blank_percent(info_data: List) -> float:
+    blank_percent = 1.0
+    for data in info_data:
+        blank_percent -= data['percent']
+
+    if blank_percent < 0:
+        return 0.0
+    return blank_percent
+
+
+def make_blank_interval(percent: float) -> Dict:
+    blank_interval = {
+        "id": 0,
+        "category": "empty",
+        "detail": "empty",
+        "percent": percent,
+        "start": datetime.today()
+    }
+    return blank_interval
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -288,6 +304,10 @@ class PieChartRequestView(APIView):
                 } for interval_obj in interval_move_objs
             ])
             info_data = sorted(info_data, key=lambda info: info['start'])
+            blank_percent = make_blank_percent(info_data)
+            info_data.append(
+                make_blank_interval(blank_percent)
+            )
             content['data']['info'] = info_data
         return Response(content, status=status_code)
 
@@ -400,7 +420,6 @@ class WeeklyRequestView(APIView):
                 {
                     "id": interval_obj.id,
                     "category": "이동",
-                    "detail": interval_obj.transport,
                     "percent": interval_obj.percent,
                     "time": {
                         "start": interval_obj.start_time,

@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 
 from accountapp.models import AppUser
 from dailypathapp.models import DailyPath
-from intervalapp.models import IntervalStay
+from intervalapp.models import IntervalStay, IntervalMove
 from myapi.utils import make_response_content
 from statisticapp.models import WeekInfo, WeekCategoryInfo, Badge
 from statisticapp.utils import make_date, make_time_spent
@@ -105,26 +105,48 @@ class BadgeRequestView(APIView):
                         "sector": badge_obj.sector,
                     }
                     daily_path_objs = DailyPath.objects.filter(user=user, date__range=[start_date, end_date])
-                    for daily_path_obj in daily_path_objs:
-                        interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj,
-                                                                         category=badge_obj.sector)
-                        for interval_stay_obj in interval_stay_objs:
-                            total_time = interval_stay_obj.end_time - interval_stay_obj.start_time
-                            detail_data.append({
-                                "id": interval_stay_obj.id,
-                                "date": make_date(daily_path_obj.date),
-                                "location": interval_stay_obj.location,
-                                "timeSpent": make_time_spent(total_time),
-                                "sortKey": total_time
-                            })
-                    badge_data['topBadge']['detail'] = [
-                        {
-                            "id": detail['id'],
-                            "date": detail['date'],
-                            "location": detail['location'],
-                            "timeSpent": detail['timeSpent'],
-                        } for detail in sorted(detail_data, key=lambda x: -x['sortKey'])[:3]
-                    ]
+                    if badge_obj.sector != "이동":
+                        for daily_path_obj in daily_path_objs:
+                            interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj,
+                                                                             category=badge_obj.sector)
+                            for interval_stay_obj in interval_stay_objs:
+                                total_time = interval_stay_obj.end_time - interval_stay_obj.start_time
+                                detail_data.append({
+                                    "id": interval_stay_obj.id,
+                                    "date": make_date(daily_path_obj.date),
+                                    "location": interval_stay_obj.location,
+                                    "timeSpent": make_time_spent(total_time),
+                                    "sortKey": total_time
+                                })
+                        badge_data['topBadge']['detail'] = [
+                            {
+                                "id": detail['id'],
+                                "date": detail['date'],
+                                "location": detail['location'],
+                                "timeSpent": detail['timeSpent'],
+                            } for detail in sorted(detail_data, key=lambda x: -x['sortKey'])[:3]
+                        ]
+                    else:
+                        for daily_path_obj in daily_path_objs:
+                            interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj,
+                                                                             category=badge_obj.sector)
+                            for interval_move_obj in interval_move_objs:
+                                total_time = interval_move_obj.end_time - interval_move_obj.start_time
+                                detail_data.append({
+                                    "id": interval_move_obj.id,
+                                    "date": make_date(daily_path_obj.date),
+                                    "location": "이동",
+                                    "timeSpent": make_time_spent(total_time),
+                                    "sortKey": total_time
+                                })
+                        badge_data['topBadge']['detail'] = [
+                            {
+                                "id": detail['id'],
+                                "date": detail['date'],
+                                "location": detail['location'],
+                                "timeSpent": detail['timeSpent'],
+                            } for detail in sorted(detail_data, key=lambda x: -x['sortKey'])[:3]
+                        ]
                 else:
                     badge_data['badges'].append({
                         "title": badge_obj.title,

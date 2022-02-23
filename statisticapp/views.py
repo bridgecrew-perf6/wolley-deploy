@@ -55,6 +55,7 @@ class BadgeRequestView(APIView):
         start_date = datetime.fromisocalendar(year, week_order, 1)
         end_date = datetime.fromisocalendar(year, week_order, 7)
         detail_data = []
+
         if not sector_sort:
             try:
                 badge_obj = user_week_info_obj.badges.get(sector='무')
@@ -128,8 +129,7 @@ class BadgeRequestView(APIView):
                         ]
                     else:
                         for daily_path_obj in daily_path_objs:
-                            interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj,
-                                                                             category=badge_obj.sector)
+                            interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj)
                             for interval_move_obj in interval_move_objs:
                                 total_time = interval_move_obj.end_time - interval_move_obj.start_time
                                 detail_data.append({

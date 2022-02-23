@@ -257,6 +257,9 @@ def make_blank_percent(info_data: List) -> float:
     blank_percent = 1.0
     for data in info_data:
         blank_percent -= data['percent']
+
+    if blank_percent < 0:
+        return 0.0
     return blank_percent
 
 

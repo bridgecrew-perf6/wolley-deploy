@@ -27,7 +27,7 @@ def coordinate2address(latitude: float, longitude: float) -> str:
     return return_address
 
 
-def get_distance(y1: float, x1: float, y2: float, x2: float) -> int:
+def get_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> int:
     """
     입력된 좌표의 거리를 계산하는 함수
 
@@ -40,10 +40,10 @@ def get_distance(y1: float, x1: float, y2: float, x2: float) -> int:
     Returns:
         m (integer): 계산된 거리 값
     """
-    lat1, lon1, lat2, lon2 = list(map(radians, [y1, x1, y2, x2]))
-    diff_lon = lon2 - lon1
-    diff_lat = lat2 - lat1
-    a = sin(diff_lat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(diff_lon / 2) ** 2
+    r_lat1, r_lon1, r_lat2, r_lon2 = list(map(radians, [lat1, lon1, lat2, lon2]))
+    diff_lon = r_lon2 - r_lon1
+    diff_lat = r_lat2 - r_lat1
+    a = sin(diff_lat / 2) ** 2 + cos(r_lat1) * cos(r_lat2) * sin(diff_lon / 2) ** 2
     c = 2 * asin(sqrt(a))
     m = 6371000 * c
     return m

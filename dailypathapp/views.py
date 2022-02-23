@@ -108,7 +108,7 @@ def make_percent(start: datetime, end: datetime) -> float:
     return percent
 
 
-def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List[Tuple]) -> None:
+def make_stay_interval(app_user: AppUser, daily_path: DailyPath, stay_point_centers: List) -> None:
     # print("Interval Stay")
     for point in stay_point_centers:
         start_time = datetime.strptime(point.arriveTime, DATETIME_FORMAT)
@@ -249,6 +249,86 @@ class PathDailyRequestView(APIView):
             make_move_interval(app_user, daily_path, move_points)
             # print("daily path 하나 성공")
 
+        content = make_response_content("성공", {})
+        return Response(content, status=status.HTTP_200_OK)
+
+
+def make_stay_point(data: Dict) -> Dict:
+    stay_point = {
+        "start_time": data["time"],
+        "end_time": data["time"][:10] + " 23:59:59",
+        "latitude": float(data["coordinates"]["latitude"]),
+        "longitude": float(data["coordinates"]["longitude"])
+    }
+    return stay_point
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PathPastRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        request_user = request.data['user']
+        request_date = request.data['date']
+        request_time_sequence = request.data['timeSequence']
+
+        try:
+            user = AppUser.objects.get(user__username=request_user)
+        except AppUser.DoesNotExist:
+            content = make_response_content("user 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_path_obj, created = DailyPath.objects.get_or_create(
+            user=user,
+            date=request_date
+        )
+
+        if not created:
+            content = make_response_content("이미 존재하는 daily path", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_path_obj.path_type = "past"
+        daily_path_obj.save()
+
+        # print(daily_path_obj.date, daily_path_obj.path_type)
+        if not request_time_sequence:
+            content = make_response_content("time sequence 없음", {})
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        request_time_sequence = sorted(request_time_sequence, key=lambda x: x["time"])
+        stay_points = []
+        for idx, data in enumerate(request_time_sequence):
+            if idx == 0:
+                stay_point = make_stay_point(data)
+                stay_points.append(stay_point)
+            else:
+                d = get_distance(
+                    stay_points[-1]["latitude"],
+                    stay_points[-1]["longitude"],
+                    float(data["coordinates"]["latitude"]),
+                    float(data["coordinates"]["longitude"])
+                )
+                stay_points[-1]["end_time"] = data["time"]
+                if d > 200:
+                    stay_point = make_stay_point(data)
+                    stay_points.append(stay_point)
+
+        for point in stay_points:
+            start = datetime.strptime(point["start_time"], DATETIME_FORMAT)
+            end = datetime.strptime(point["end_time"], DATETIME_FORMAT)
+            percent = make_percent(start, end)
+            latitude = point["latitude"]
+            longitude = point["longitude"]
+            IntervalStay.objects.create(
+                daily_path=daily_path_obj,
+                start_time=start,
+                end_time=end,
+                address="?",
+                category="과거",
+                location="?",
+                latitude=latitude,
+                longitude=longitude,
+                percent=percent
+            )
         content = make_response_content("성공", {})
         return Response(content, status=status.HTTP_200_OK)
 

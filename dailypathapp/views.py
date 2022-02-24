@@ -289,18 +289,12 @@ class PathPastRequestView(APIView):
             user=user,
             date=request_date
         )
-
         if not created:
             content = make_response_content("이미 존재하는 daily path", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         daily_path_obj.path_type = "past"
         daily_path_obj.save()
-
-        # print(daily_path_obj.date, daily_path_obj.path_type)
-        if not request_time_sequence:
-            content = make_response_content("time sequence 없음", {})
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         request_time_sequence = sorted(request_time_sequence, key=lambda x: x["time"])
         stay_points = []

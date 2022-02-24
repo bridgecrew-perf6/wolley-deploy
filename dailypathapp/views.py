@@ -494,9 +494,9 @@ class WeeklyRequestView(APIView):
             check_date = datetime.fromisocalendar(iso_year, iso_week, i + 1)
             try:
                 user = AppUser.objects.get(user__username=request_user)
-                daily_path_objs = DailyPath.objects.get(user=user, date=check_date)
-                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_objs)
-                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_objs)
+                daily_path_obj = DailyPath.objects.get(user=user, date=check_date)
+                interval_stay_objs = IntervalStay.objects.filter(daily_path=daily_path_obj)
+                interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj)
             except AppUser.DoesNotExist:
                 content = make_response_content("user 없음", {})
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
@@ -511,36 +511,48 @@ class WeeklyRequestView(APIView):
                 continue
 
             day_data = {
-                "id": daily_path_objs.id,
+                "id": daily_path_obj.id,
                 "day": DAY_NAME[i],
                 "date": check_date,
                 "info": []
             }
-            day_data["info"].extend([
-                {
-                    "id": interval_obj.id,
-                    "category": interval_obj.category,
-                    "percent": interval_obj.percent,
-                    "time": {
-                        "start": interval_obj.start_time,
-                        "end": interval_obj.end_time
+            if daily_path_obj.path_type == "daily":
+                day_data["info"].extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": interval_obj.category,
+                        "percent": interval_obj.percent,
+                        "time": {
+                            "start": interval_obj.start_time,
+                            "end": interval_obj.end_time
+                        }
+                    } for interval_obj in interval_stay_objs
+                ])
+                day_data["info"].extend([
+                    {
+                        "id": interval_obj.id,
+                        "category": "이동",
+                        "percent": interval_obj.percent,
+                        "time": {
+                            "start": interval_obj.start_time,
+                            "end": interval_obj.end_time
+                        }
+                    } for interval_obj in interval_move_objs
+                ])
+                day_data["info"] = sorted(day_data["info"], key=lambda x: x['time']['start'])
+            else:
+                day_data["info"].append(
+                    {
+                        "id": 0,
+                        "category": "없음",
+                        "percent": 1.0,
+                        "time": {
+                            "start": datetime.today(),
+                            "end": datetime.today()
+                        }
                     }
-                } for interval_obj in interval_stay_objs
-            ])
-            day_data["info"].extend([
-                {
-                    "id": interval_obj.id,
-                    "category": "이동",
-                    "percent": interval_obj.percent,
-                    "time": {
-                        "start": interval_obj.start_time,
-                        "end": interval_obj.end_time
-                    }
-                } for interval_obj in interval_move_objs
-            ])
-            day_data["info"] = sorted(day_data["info"], key=lambda x: x['time']['start'])
+                )
             data["days"].append(day_data)
-
         content = make_response_content("성공", data)
         return Response(content, status=status.HTTP_200_OK)
 

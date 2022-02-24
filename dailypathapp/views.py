@@ -454,22 +454,37 @@ class MapLogRequestView(APIView):
 
     def get(self, request):
         content, status_code, daily_path_obj = check_daily_path_obj(request)
-
         if status_code == status.HTTP_200_OK:
-            content['data']['info'] = list()
+            info_list = []
             interval_move_objs = IntervalMove.objects.filter(daily_path=daily_path_obj.id)
             for interval_move_obj in interval_move_objs:
                 map_log_objs = GPSLog.objects.filter(daily_path=daily_path_obj,
                                                      timestamp__range=[interval_move_obj.start_time,
                                                                        interval_move_obj.end_time])
-                content['data']['info'].extend([
-                    {
-                        "coordinates": {
-                            "latitude": map_log_obj.latitude,
-                            "longitude": map_log_obj.longitude
-                        }
-                    } for map_log_obj in map_log_objs
-                ])
+
+                for map_log_obj in map_log_objs:
+                    if not info_list:
+                        info_list.append({
+                            "coordinates": {
+                                "latitude": map_log_obj.latitude,
+                                "longitude": map_log_obj.longitude
+                            }
+                        })
+                    else:
+                        d = get_distance(
+                            info_list[-1]["coordinates"]["latitude"],
+                            info_list[-1]["coordinates"]["longitude"],
+                            map_log_obj.latitude,
+                            map_log_obj.longitude
+                        )
+                        if d > 200:
+                            info_list.append({
+                                "coordinates": {
+                                    "latitude": map_log_obj.latitude,
+                                    "longitude": map_log_obj.longitude
+                                }
+                            })
+            content['data']['info'] = info_list
         return Response(content, status=status_code)
 
 

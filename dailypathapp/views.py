@@ -282,7 +282,7 @@ class PathPastRequestView(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         if not request_time_sequence:
-            content = make_response_content("time sequence 없음")
+            content = make_response_content("time sequence 없음", {})
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         daily_path_obj, created = DailyPath.objects.get_or_create(

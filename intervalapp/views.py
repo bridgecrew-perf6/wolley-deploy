@@ -41,11 +41,16 @@ class IntervalRequestView(APIView):
 
         app_user_obj = AppUser.objects.get(user=interval_obj.daily_path.user)
 
+        try:
+            location_id = request.data["locationId"]
+        except:
+            location_id = "0"
+
         Estimate.objects.create(
             user=app_user_obj,
             category=request.data["category"],
             location=request.data["location"],
-            location_id=request.data["locationId"],
+            location_id=location_id,
             latitude=request.data["coordinates"]["latitude"],
             longitude=request.data["coordinates"]["longitude"]
         )
@@ -65,7 +70,7 @@ class IntervalRequestView(APIView):
 
         interval_obj.category = request.data["category"]
         interval_obj.location = request.data["location"]
-        interval_obj.location_id = request.data["locationId"]
+        interval_obj.location_id = location_id
         interval_obj.latitude = request.data["coordinates"]["latitude"]
         interval_obj.longitude = request.data["coordinates"]["longitude"]
         interval_obj.address = coordinate2address(

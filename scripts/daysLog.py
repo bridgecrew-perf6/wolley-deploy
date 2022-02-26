@@ -7,7 +7,7 @@ os.environ.setdefault("DJANGO_SETTING_MODULE", "myapi.settings")
 django.setup()
 
 
-# python manage.py runscript -v2 daysLog --script-args F1 2022-02-16 2022-02-18
+# python manage.py runscript -v2 daysLog --script-args F1 2022-02-21 2022-02-21
 def run(username, start_date, end_date):
     start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)

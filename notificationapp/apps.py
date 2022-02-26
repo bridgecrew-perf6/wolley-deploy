@@ -19,9 +19,9 @@ class NotificationappConfig(AppConfig):
         from . import pathDailyNoti, saveLocationNoti
         init_app()
 
-        from testapp.models import TestTable
-        import datetime
-        print(f"{datetime.datetime.now()}: ready가 정상 작동")
-        TestTable.objects.create(textfield=f"{datetime.datetime.now()}, ready 가 정상 작동 in apps")
-        pathDailyNoti.start_path_daily_noti()
-        # saveLocationNoti.start_saveLocation()
+        # from testapp.models import TestTable
+        # import datetime
+        # print(f"{datetime.datetime.now()}: ready가 정상 작동")
+        # TestTable.objects.create(textfield=f"{datetime.datetime.now()}, ready 가 정상 작동 in apps")
+        # pathDailyNoti.start_path_daily_noti()
+        saveLocationNoti.start_saveLocation()

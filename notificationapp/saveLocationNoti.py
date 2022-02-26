@@ -35,10 +35,10 @@ def start_saveLocation():
     # scheduler.get_jobs()[0].modify(next_run_time=get_nearest_half_hour())
     # scheduler.get_jobs()[0].modify(next_run_time=datetime.datetime.now())
 
-    from testapp.models import TestTable
-    TestTable.objects.create(textfield=f"{datetime.datetime.now()}, start가 정상 작동")
-    print(f"{datetime.datetime.now()}: start가 정상 작동")
-    print(appuser_tokens)
+    # from testapp.models import TestTable
+    # TestTable.objects.create(textfield=f"{datetime.datetime.now()}, start가 정상 작동")
+    # print(f"{datetime.datetime.now()}: start가 정상 작동")
+    # print(appuser_tokens)
 
     scheduler.start()
     print("after scheduler.start() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")

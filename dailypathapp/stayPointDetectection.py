@@ -28,7 +28,6 @@ class Point:
     def __repr__(self):
         return f"{self.dateTime}"
 
-
 # calculate distance between two points from their coordinate
 def getDistanceOfPoints(pi, pj):
     lat1, lon1, lat2, lon2 = list(map(radians, [float(pi.latitude), float(pi.longitude),

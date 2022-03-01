@@ -1,15 +1,16 @@
 from django.contrib import admin
 
-from .models import Interval
+from .models import IntervalMove
+from .models import IntervalStay
 
-# from .models import TimeRange
+
+class IntervalMoveAdmin(admin.ModelAdmin):
+    search_fields = ['daily_path__user__user__username', 'daily_path__date']
 
 
-# class IntervalAdmin(admin.ModelAdmin):
-#     list_display = ('date_created', 'last_updated', )
-#
-#
-# admin.site.register(Interval, IntervalAdmin)
+class IntervalStayAdmin(admin.ModelAdmin):
+    search_fields = ['daily_path__user__user__username', 'daily_path__date']
 
-admin.site.register(Interval)
-# admin.site.register(TimeRange)
+
+admin.site.register(IntervalMove, IntervalMoveAdmin)
+admin.site.register(IntervalStay, IntervalStayAdmin)

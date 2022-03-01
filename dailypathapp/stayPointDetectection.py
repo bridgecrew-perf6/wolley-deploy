@@ -26,9 +26,7 @@ class Point:
         self.leaveTime = leaveTime
 
     def __repr__(self):
-        return f"({self.latitude}, {self.longitude}) " \
-               f"{time.strftime(time_format, time.localtime(self.arriveTime))} ~ {time.strftime(time_format, time.localtime(self.leaveTime))}"
-
+        return f"{self.dateTime}"
 
 # calculate distance between two points from their coordinate
 def getDistanceOfPoints(pi, pj):

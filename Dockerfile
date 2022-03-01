@@ -23,11 +23,11 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Seoul
 RUN apt-get install -y tzdata
 
-RUN git clone git@github.com:neo-wolley/wolley-deploy.git
+RUN git clone -b dev --single-branch git@github.com:neo-wolley/wolley-deploy.git
 
 WORKDIR /home/alpha.technic/wolley-deploy/
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt 
 
 RUN pip install gunicorn
 

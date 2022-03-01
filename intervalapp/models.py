@@ -3,9 +3,9 @@ from django.db import models
 from dailypathapp.models import DailyPath
 
 
-class Interval(models.Model):
-    id = models.BigAutoField(primary_key=True, db_column='interval_id')
-    daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='intervals')
+class IntervalStay(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='intervalstay_id')
+    daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='intervalstays')
 
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -17,19 +17,39 @@ class Interval(models.Model):
 
     category = models.CharField(max_length=70)
     location = models.CharField(max_length=70)
+    location_id = models.CharField(max_length=100, default="0")
 
     percent = models.FloatField(default=0.0)
-    EmotionType = models.TextChoices('emotion', 'positive normal negative')
-    emotion = models.CharField(max_length=20, choices=EmotionType.choices, null=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'interval'
+        db_table = 'intervalstay'
 
     def __str__(self):
-        return f'{self.daily_path} -> (interval_id: {self.id}, category: {self.category})'
+        return f'{self.daily_path} -> (intervalstay_id: {self.id}, category: {self.category})'
+
+
+class IntervalMove(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='intervalmove_id')
+    daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='intervalmoves')
+
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+    transport = models.CharField(max_length=70)
+    percent = models.FloatField(default=0.0)
+
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'intervalmove'
+
+    def __str__(self):
+        return f'{self.daily_path} -> (intervalmove_id: {self.id}, transport: {self.transport})'
+
 
 # class TimeRange(models.Model):
 #     id = models.BigAutoField(primary_key=True, db_column='timerange_id')

@@ -8,6 +8,7 @@ class DailyPath(models.Model):
     user = models.ForeignKey(AppUser, on_delete=models.CASCADE, related_name="dailypaths")  # user가 piechart를 여러 개 가질 수 있다.
 
     date = models.DateField(default=datetime.date.today)
+    path_type = models.CharField(max_length=10, default="daily")
 
     date_created = models.DateTimeField(auto_now_add=True)  # auto_now_add는 최초 저장(insert) 시에만 현재 날짜(date.today()) 를 적용
     last_updated = models.DateTimeField(auto_now=True)  # auto_now는 django model이 save 될 때마다 현재날짜(date.today()) 로 갱신
@@ -20,7 +21,7 @@ class DailyPath(models.Model):
 
 
 class GPSLog(models.Model):
-    id = models.BigAutoField(primary_key=True, db_column="GPSlog_id")
+    id = models.BigAutoField(primary_key=True, db_column="GPSLog_id")
     daily_path = models.ForeignKey(DailyPath, on_delete=models.CASCADE, related_name='gpslogs')
 
     latitude = models.FloatField()
@@ -31,4 +32,4 @@ class GPSLog(models.Model):
         db_table = 'gpslog'
 
     def __str__(self):
-        return f'({self.latitude}, {self.longitude}) {self.timestamp}'
+        return f'{self.daily_path} -> ({self.latitude}, {self.longitude}) {self.timestamp}'

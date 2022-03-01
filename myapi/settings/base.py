@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'diaryapp',
     'intervalapp',
     'recommendationapp',
+    'statisticapp.apps.StatisticappConfig',
+    'notificationapp.apps.NotificationappConfig',
 
     # for TestTable
     'testapp',
@@ -48,14 +50,19 @@ INSTALLED_APPS = [
 
     # CORS error 처리
     'corsheaders',
-]
 
+    # 배치 처리
+    'django_apscheduler',
+
+    # script 실행
+    'django_extensions',
+]
 
 MIDDLEWARE = [
     # CORS error 처리
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -111,7 +118,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'myapi.wsgi.application'
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -130,7 +136,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -143,7 +148,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = False
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
@@ -160,3 +164,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 배치 처리
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Default
+
+SCHEDULER_DEFAULT = True

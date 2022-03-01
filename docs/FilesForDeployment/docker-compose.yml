@@ -1,0 +1,61 @@
+version: "3.7"
+services:
+  ngnix:
+    image: nginx:1.19.5
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /home/alpha_technic/nginx_setting/nginx.conf:/etc/nginx/nginx.conf
+      - /home/alpha_technic/nginx_setting/logrotate:/etc/logrotate.d/nginx
+      - static-volume:/data/static
+    networks:
+      - network
+    ports:
+      - 80:80
+
+  django_container_gunicorn:
+    image: django_image:1
+    networks:
+      - network
+    volumes:
+      - static-volume:/home/alpha_technic/wolley-deploy/staticfiles
+    secrets:
+      - MYSQL_PASSWORD
+      - DJANGO_SECRET_KEY
+      - MY_REST_API_KEY
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.5
+    networks:
+      - network
+    volumes:
+      - /home/alpha_technic/mariadb_setting/my.cnf:/etc/mysql/my.cnf
+      - maria-database:/var/lib/mysql
+    secrets:
+      - MYSQL_PASSWORD
+      - MYSQL_ROOT_PASSWORD
+    command: --lower_case_table_names=0
+    environment:
+      MYSQL_DATABASE: wolleydb
+      MYSQL_USER: root
+      MYSQL_PASSWORD_FILE: /run/secrets/MYSQL_PASSWORD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/MYSQL_ROOT_PASSWORD
+
+networks:
+  network:
+
+volumes:
+  maria-database:
+  static-volume:
+
+secrets:
+  DJANGO_SECRET_KEY:
+    external: true
+  MYSQL_PASSWORD:
+    external: true
+  MYSQL_ROOT_PASSWORD:
+    external: true
+  MY_REST_API_KEY:
+    external: true

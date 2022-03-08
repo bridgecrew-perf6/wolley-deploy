@@ -55,4 +55,4 @@
 
 ## Service imgs
 
-![PJ_SUMMARY](./PJ_SUMMARY.png)
+![PJ_SUMMARY](./_project_review/PJ_SUMMARY.png)

@@ -4,7 +4,7 @@
   - 무중단배포 못함
     - 블루그린까지는 아니더라도, Rolling 정도는 구축했어야 했다.
     - hostPC에 nginx(로드밸런서)를 두고, django 컨테이너, mariadb 컨테이너만 docker로 관리하면서 stack을 2개 쯤 만드는 방향으로 무중단 배포를 하고 싶다.
-  - Start Up Script 활용
+  - GCP Start Up Script 활용
     - `Dockerfile`, `docker-compose.yml`을 활용해서 비교적 쉽게 서비스를 업데이트할 수 있기는 했다. 
     - 그러나, 위 2개 파일을 이용해서 하는 반복적인 작업을 모두 Start up script에 적어두었다면, instance를 restart하는 것만으로도 손쉬운 배포가 가능했을 듯 하다.
   - DB의 철학 vs Docker의 철학
@@ -16,6 +16,10 @@
     - 서비스의 핵심이 되는 메인 로직에 대한 TEST 환경은 sprint 초반에 작성할 것.
     - 이렇게 공수가 크고 어려운 작업일 줄 예상하지 못한 것이 패착
     - 그럼에도 불구하고, 서비스의 메인 로직이라면 필히 test환경을 발빠르게 만들었어야.
+  - GPS로그 -> 파이차트 로직 (서비스 메인 로직) 점검 미흡. 
+    - 엘라의 GPSLogs
+    - 나의 Stay points detection algorithm
+    - 사브레의 interval 생성 로직
   
 - My Skill Up
   - stay point detection 알고리즘

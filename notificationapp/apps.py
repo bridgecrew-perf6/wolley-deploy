@@ -7,7 +7,7 @@ from myapi.settings.base import BASE_DIR
 
 def init_app():
     # firebase 관련
-    cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
+    cred_path = os.path.join(BASE_DIR, "_files_for_deploy/serviceAccountKey.json")
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
 

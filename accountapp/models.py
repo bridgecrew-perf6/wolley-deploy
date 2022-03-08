@@ -9,7 +9,7 @@ class AppUser(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
         related_name='app_user'
-    )  # user_id, related_name default : appuser
+    )  # user_id, related_name default : app_user
     fcmToken = models.CharField(max_length=200, default="abc", null=True, blank=True)
 
     class Meta:

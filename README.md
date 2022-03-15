@@ -7,6 +7,23 @@
 
 ## Environment
 
+![https://user-images.githubusercontent.com/58129950/155041694-57af051c-bd65-4afc-b232-b930fa7039f7.png](https://user-images.githubusercontent.com/58129950/155041694-57af051c-bd65-4afc-b232-b930fa7039f7.png)
+
+- GCP setting
+  - region : 오사카
+  - 삭제 보호 : 설정됨
+  - 부팅디스크
+    - 운영체제 : ubuntu
+  - 방화벽 : HTTP 트래픽
+  - 고정 IP
+  - port opened
+    - 22, 80, 443, 8000, 8080, 8888, 9000
+  - https 인증
+- 도커 version 3.7
+  - django-gunicorn 컨테이너 (custom image 기반)
+  - nginx 1.19.5 컨테이너
+  - mariadb 10.5 컨테이너
+
 
 
 ## Prerequisite
@@ -53,6 +70,6 @@
 
 
 
-## Service imgs
+## Service Description
 
 ![PJ_SUMMARY](./_project_review/PJ_SUMMARY.png)
